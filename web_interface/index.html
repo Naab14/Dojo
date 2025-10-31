@@ -239,7 +239,7 @@
                     </div>
 
                     <div class="bg-white rounded shadow-sm p-1">
-                        <div class="calendar-grid">
+                        <div class="calendar-grid" id="calendarGrid">
                             <div class="weekday-header">Mån</div>
                             <div class="weekday-header">Tis</div>
                             <div class="weekday-header">Ons</div>
@@ -247,7 +247,6 @@
                             <div class="weekday-header">Fre</div>
                             <div class="weekday-header">Lör</div>
                             <div class="weekday-header">Sön</div>
-                            <div id="calendarDays"></div>
                         </div>
                     </div>
 
@@ -280,16 +279,17 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block font-medium mb-1">Start</label>
-                        <input type="time" id="shiftStart" value="06:00"
-                               class="w-full px-2 py-1 border rounded">
+                        <label class="block font-medium mb-1">Start (HH:MM)</label>
+                        <input type="time" id="shiftStart" value="06:00" step="900"
+                               class="w-full px-2 py-1 border rounded" placeholder="06:00">
                     </div>
                     <div>
-                        <label class="block font-medium mb-1">Slut</label>
-                        <input type="time" id="shiftEnd" value="14:00"
-                               class="w-full px-2 py-1 border rounded">
+                        <label class="block font-medium mb-1">Slut (HH:MM)</label>
+                        <input type="time" id="shiftEnd" value="14:00" step="900"
+                               class="w-full px-2 py-1 border rounded" placeholder="14:00">
                     </div>
                 </div>
+                <p class="text-xs text-slate-500 -mt-2">24-timmarsformat (t.ex. 06:00, 14:00, 22:00)</p>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block font-medium mb-1">Veckor</label>
@@ -458,8 +458,11 @@
         function renderCalendar() {
             document.getElementById('currentMonth').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
 
-            const container = document.getElementById('calendarDays');
-            container.innerHTML = '';
+            const grid = document.getElementById('calendarGrid');
+
+            // Remove all day cells (keep headers)
+            const days = grid.querySelectorAll('.calendar-day');
+            days.forEach(day => day.remove());
 
             const firstDay = new Date(currentYear, currentMonth, 1);
             let startDate = new Date(firstDay);
@@ -472,7 +475,7 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Render 6 weeks
+            // Render 6 weeks - append directly to grid
             for (let i = 0; i < 42; i++) {
                 const currentDay = new Date(startDate);
                 currentDay.setDate(startDate.getDate() + i);
@@ -522,7 +525,7 @@
                     dayDiv.appendChild(summaryDiv);
                 }
 
-                container.appendChild(dayDiv);
+                grid.appendChild(dayDiv);
             }
         }
 
