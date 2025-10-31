@@ -2,11 +2,19 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skiftschema</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Skiftschema Analysator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-size: 13px; }
+
+        * { -webkit-tap-highlight-color: transparent; }
+
+        button, input, select { min-height: 44px; }
+
+        @media (max-width: 640px) {
+            body { font-size: 14px; }
+        }
 
         .calendar-grid {
             display: grid;
@@ -22,19 +30,9 @@
             position: relative;
         }
 
-        .calendar-day:hover {
-            background: #f8fafc;
-        }
-
-        .calendar-day.other-month {
-            background: #f1f5f9;
-            opacity: 0.5;
-        }
-
-        .calendar-day.today {
-            background: #dbeafe;
-            border: 2px solid #3b82f6;
-        }
+        .calendar-day:hover { background: #f8fafc; }
+        .calendar-day.other-month { background: #f1f5f9; opacity: 0.5; }
+        .calendar-day.today { background: #dbeafe; border: 2px solid #3b82f6; }
 
         .day-header {
             font-weight: 600;
@@ -58,9 +56,7 @@
             line-height: 1.3;
         }
 
-        .shift-bar:hover {
-            opacity: 0.8;
-        }
+        .shift-bar:hover { opacity: 0.8; }
 
         .shift-color-1 { background-color: #3b82f6; }
         .shift-color-2 { background-color: #8b5cf6; }
@@ -113,29 +109,213 @@
             margin-bottom: 6px;
         }
 
-        input, select {
+        /* Pattern Card Styles */
+        .pattern-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .pattern-card:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .pattern-card.selected {
+            border-color: #3b82f6;
+            background: #dbeafe;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .pattern-card.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #3b82f6;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Collapsible Sections */
+        .collapsible-section {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible-section.collapsed {
+            max-height: 0;
+        }
+
+        .collapsible-section.expanded {
+            max-height: 2000px;
+        }
+
+        /* Input Validation */
+        input.error, select.error {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* Progress Steps */
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-step .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .progress-step.active .step-circle {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .progress-step.complete .step-circle {
+            background: #10b981;
+            color: white;
+        }
+
+        .preset-button {
+            min-height: 44px;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-button:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+
+        .preset-button.active {
+            border-color: #3b82f6;
+            background: #dbeafe;
+        }
+
+        /* Wizard Modal */
+        .wizard-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .wizard-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        input, select {
+            font-size: 16px !important; /* Prevent zoom on iOS */
         }
 
         button {
-            font-size: 11px;
+            font-size: 13px;
         }
     </style>
 </head>
 <body class="bg-slate-100">
     <div class="min-h-screen p-2">
         <div class="max-w-[1600px] mx-auto">
-            <!-- Compact Header -->
-            <div class="bg-white rounded shadow-sm p-2 mb-2">
-                <div class="flex items-center justify-between">
-                    <h1 class="text-lg font-bold text-slate-800">📅 Skiftschema</h1>
-                    <div class="flex gap-1">
-                        <button onclick="previousMonth()" class="px-2 py-1 bg-slate-600 text-white rounded hover:bg-slate-700">←</button>
-                        <button onclick="nextMonth()" class="px-2 py-1 bg-slate-600 text-white rounded hover:bg-slate-700">→</button>
-                        <button onclick="saveToLocalStorage()" class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700">💾</button>
-                        <button onclick="loadFromLocalStorage()" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">📂</button>
-                        <button onclick="exportSchedule()" class="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700">📥 CSV</button>
+            <!-- Quick Start Guide Banner -->
+            <div id="quickStartBanner" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded shadow-lg p-4 mb-2">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h2 class="text-lg font-bold mb-2">🚀 Kom igång på 3 steg</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div class="flex items-start gap-2">
+                                <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold flex-shrink-0">1</div>
+                                <div>
+                                    <strong>Konfigurera</strong><br>
+                                    Välj mallar eller skapa egna skift
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold flex-shrink-0">2</div>
+                                <div>
+                                    <strong>Jämför</strong><br>
+                                    Se täckning och kostnader i kalendern
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold flex-shrink-0">3</div>
+                                <div>
+                                    <strong>Besluta</strong><br>
+                                    Exportera och implementera
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    <button onclick="dismissQuickStart()" class="text-white hover:text-blue-200 ml-4">✕</button>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="bg-white rounded shadow-sm p-2 mb-2">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h1 class="text-lg font-bold text-slate-800">📅 Skiftschema Analysator</h1>
+                    <div class="flex gap-1 flex-wrap">
+                        <button onclick="previousMonth()" class="px-3 py-2 bg-slate-600 text-white rounded hover:bg-slate-700">←</button>
+                        <button onclick="nextMonth()" class="px-3 py-2 bg-slate-600 text-white rounded hover:bg-slate-700">→</button>
+                        <button onclick="saveToLocalStorage()" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">💾 Spara</button>
+                        <button onclick="loadFromLocalStorage()" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">📂 Ladda</button>
+                        <button onclick="exportSchedule()" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">📥 CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Presets -->
+            <div class="bg-white rounded shadow-sm p-3 mb-2">
+                <h3 class="font-bold text-sm mb-2">⚡ Snabbmallar</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <button onclick="applyPreset('pharma')" class="preset-button text-left">
+                        <div class="font-bold text-sm">🏭 Pharma/Tillverkning</div>
+                        <div class="text-xs text-slate-600">24/7 • 3 skift • Balanserad</div>
+                    </button>
+                    <button onclick="applyPreset('continuous')" class="preset-button text-left">
+                        <div class="font-bold text-sm">🔄 Kontinuerlig Process</div>
+                        <div class="text-xs text-slate-600">168h/vecka • Max täckning</div>
+                    </button>
+                    <button onclick="applyPreset('cost_optimized')" class="preset-button text-left">
+                        <div class="font-bold text-sm">💰 Kostnadsoptimerad</div>
+                        <div class="text-xs text-slate-600">5x8 • Minimal bemanning</div>
+                    </button>
                 </div>
             </div>
 
@@ -144,11 +324,14 @@
                 <div class="xl:col-span-1 space-y-2">
                     <!-- KPIs -->
                     <div class="compact-card">
-                        <h3>📈 Översikt</h3>
-                        <div class="space-y-2 text-xs">
+                        <button onclick="toggleSection('kpi')" class="w-full flex items-center justify-between text-left">
+                            <h3>📈 Översikt</h3>
+                            <span id="kpi-toggle">▼</span>
+                        </button>
+                        <div id="kpi-section" class="collapsible-section expanded space-y-2 text-xs mt-2">
                             <div class="flex justify-between">
                                 <span class="text-slate-600">FTE:</span>
-                                <span class="font-bold" id="kpiTotalFTE">0</span>/<span id="kpiBudget">44</span>
+                                <span><span class="font-bold" id="kpiTotalFTE">0</span>/<span id="kpiBudget">44</span></span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-slate-600">Utnyttj:</span>
@@ -163,72 +346,83 @@
 
                     <!-- Settings -->
                     <div class="compact-card">
-                        <h3>⚙️ Inställningar</h3>
-                        <div class="space-y-2">
+                        <button onclick="toggleSection('settings')" class="w-full flex items-center justify-between text-left">
+                            <h3>⚙️ Inställningar</h3>
+                            <span id="settings-toggle">▼</span>
+                        </button>
+                        <div id="settings-section" class="collapsible-section expanded space-y-2 mt-2">
                             <div>
                                 <label class="block text-xs text-slate-600 mb-1">FTE Budget</label>
-                                <input type="number" id="totalFTE" value="44" min="1" max="200" onchange="calculate()"
+                                <input type="number" id="totalFTE" value="44" min="1" max="200" onchange="validateAndCalculate()"
                                        class="w-full px-2 py-1 text-xs border rounded">
+                                <div id="totalFTE-error" class="error-message hidden"></div>
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-600 mb-1">Kostnad/år (SEK)</label>
-                                <input type="number" id="fteCost" value="650000" step="10000" onchange="calculate()"
+                                <label class="block text-xs text-slate-600 mb-1">
+                                    Kostnad/år (SEK)
+                                    <span class="text-slate-400">Snitt: 650k</span>
+                                </label>
+                                <input type="number" id="fteCost" value="650000" min="300000" max="2000000" step="10000" onchange="validateAndCalculate()"
                                        class="w-full px-2 py-1 text-xs border rounded">
+                                <div id="fteCost-error" class="error-message hidden"></div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Coverage -->
                     <div class="compact-card">
-                        <h3>📊 Täckning (h/dag)</h3>
-                        <div class="space-y-1 text-xs">
+                        <button onclick="toggleSection('coverage')" class="w-full flex items-center justify-between text-left">
+                            <h3>📊 Täckning (h/dag)</h3>
+                            <span id="coverage-toggle">▼</span>
+                        </button>
+                        <div id="coverage-section" class="collapsible-section expanded space-y-1 text-xs mt-2">
                             <div class="flex justify-between items-center">
                                 <span>Mån-Fre</span>
-                                <input type="number" id="coverageMF" value="24" min="0" max="24" onchange="calculate()"
-                                       class="w-12 px-1 py-0.5 text-xs border rounded">
+                                <input type="number" id="coverageMF" value="24" min="0" max="168" onchange="validateAndCalculate()"
+                                       class="w-16 px-1 py-1 text-xs border rounded">
                             </div>
                             <div class="flex justify-between items-center">
                                 <span>Lördag</span>
-                                <input type="number" id="coverageSat" value="12" min="0" max="24" onchange="calculate()"
-                                       class="w-12 px-1 py-0.5 text-xs border rounded">
+                                <input type="number" id="coverageSat" value="12" min="0" max="24" onchange="validateAndCalculate()"
+                                       class="w-16 px-1 py-1 text-xs border rounded">
                             </div>
                             <div class="flex justify-between items-center">
                                 <span>Söndag</span>
-                                <input type="number" id="coverageSun" value="0" min="0" max="24" onchange="calculate()"
-                                       class="w-12 px-1 py-0.5 text-xs border rounded">
+                                <input type="number" id="coverageSun" value="0" min="0" max="24" onchange="validateAndCalculate()"
+                                       class="w-16 px-1 py-1 text-xs border rounded">
                             </div>
                         </div>
                     </div>
 
                     <!-- Presets -->
                     <div class="compact-card">
-                        <h3>🏭 Mallar</h3>
-                        <select id="rotationPreset" onchange="applyRotationPreset()"
-                                class="w-full px-2 py-1 text-xs border rounded">
-                            <option value="">Välj mall...</option>
-                            <option value="continental">Continental 8h</option>
-                            <option value="dupont">DuPont 12h</option>
-                            <option value="pitman">Pitman 2-2-3</option>
-                            <option value="panama">Panama 2-2-3</option>
-                            <option value="24_7_8h">24/7 3-skift</option>
-                            <option value="5_8">5x8 Standard</option>
-                            <option value="4_10">4x10 Vecka</option>
-                        </select>
+                        <button onclick="toggleSection('presets')" class="w-full flex items-center justify-between text-left">
+                            <h3>🏭 Rotationsmallar</h3>
+                            <span id="presets-toggle">▼</span>
+                        </button>
+                        <div id="presets-section" class="collapsible-section expanded mt-2">
+                            <div id="patternCards" class="space-y-2"></div>
+                        </div>
                     </div>
 
                     <!-- Shifts -->
                     <div class="compact-card">
-                        <h3>🔧 Skift</h3>
-                        <div class="space-y-1 mb-2 text-xs" id="shiftsList"></div>
-                        <button onclick="showAddShiftModal()" class="w-full px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700">
-                            + Lägg till
+                        <button onclick="toggleSection('shifts')" class="w-full flex items-center justify-between text-left">
+                            <h3>🔧 Aktiva Skift</h3>
+                            <span id="shifts-toggle">▼</span>
                         </button>
+                        <div id="shifts-section" class="collapsible-section expanded mt-2">
+                            <div class="space-y-1 mb-2 text-xs" id="shiftsList"></div>
+                            <button onclick="showWizard()" class="w-full px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                                + Lägg till skift
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Quick Analysis -->
+                    <!-- Quick Tips -->
                     <div class="compact-card">
-                        <h3>💡 Tips</h3>
-                        <div id="quickTips" class="text-xs text-slate-600"></div>
+                        <h3>💡 Status</h3>
+                        <div id="quickTips" class="text-xs text-slate-600 mt-2"></div>
                     </div>
                 </div>
 
@@ -251,14 +445,24 @@
                     </div>
 
                     <!-- Compact Analysis -->
-                    <div class="mt-2 grid grid-cols-2 gap-2">
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                         <div class="compact-card">
-                            <h3>📊 Veckoöversikt</h3>
-                            <div id="weeklyAnalysis" class="text-xs"></div>
+                            <button onclick="toggleSection('weekly')" class="w-full flex items-center justify-between text-left">
+                                <h3>📊 Veckoöversikt</h3>
+                                <span id="weekly-toggle">▼</span>
+                            </button>
+                            <div id="weekly-section" class="collapsible-section expanded">
+                                <div id="weeklyAnalysis" class="text-xs mt-2"></div>
+                            </div>
                         </div>
                         <div class="compact-card">
-                            <h3>💰 Skiftkostnader</h3>
-                            <div id="costAnalysis" class="text-xs"></div>
+                            <button onclick="toggleSection('cost')" class="w-full flex items-center justify-between text-left">
+                                <h3>💰 Skiftkostnader</h3>
+                                <span id="cost-toggle">▼</span>
+                            </button>
+                            <div id="cost-section" class="collapsible-section expanded">
+                                <div id="costAnalysis" class="text-xs mt-2"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -266,51 +470,103 @@
         </div>
     </div>
 
-    <!-- Compact Modal -->
-    <div id="shiftModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded shadow-xl p-4 max-w-lg w-full m-4 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-md font-bold mb-3" id="modalTitle">Lägg till skift</h3>
-            <input type="hidden" id="editShiftId" value="">
-            <div class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-medium mb-1">Namn</label>
-                    <input type="text" id="shiftName" placeholder="t.ex. Morgonpass"
-                           class="w-full px-2 py-1 border rounded">
+    <!-- Process Setup Wizard Modal -->
+    <div id="wizardModal" class="hidden wizard-overlay">
+        <div class="wizard-content p-6">
+            <h3 class="text-lg font-bold mb-4">Skapa nytt skift</h3>
+
+            <!-- Wizard Steps -->
+            <div class="flex justify-between mb-6">
+                <div class="progress-step active" id="step1-indicator">
+                    <div class="step-circle">1</div>
+                    <span class="text-xs">Typ</span>
                 </div>
+                <div class="progress-step" id="step2-indicator">
+                    <div class="step-circle">2</div>
+                    <span class="text-xs">Tider</span>
+                </div>
+                <div class="progress-step" id="step3-indicator">
+                    <div class="step-circle">3</div>
+                    <span class="text-xs">Bemanning</span>
+                </div>
+            </div>
+
+            <!-- Step 1: Choose Template -->
+            <div id="wizardStep1" class="space-y-3">
+                <h4 class="font-bold">Välj skifttyp eller mall</h4>
                 <div class="grid grid-cols-2 gap-2">
+                    <button onclick="selectWizardTemplate('custom')" class="preset-button text-left p-3">
+                        <div class="font-bold">Anpassat skift</div>
+                        <div class="text-xs text-slate-600">Definiera egna tider</div>
+                    </button>
+                    <button onclick="selectWizardTemplate('morning')" class="preset-button text-left p-3">
+                        <div class="font-bold">Morgonpass</div>
+                        <div class="text-xs text-slate-600">06:00-14:00</div>
+                    </button>
+                    <button onclick="selectWizardTemplate('day')" class="preset-button text-left p-3">
+                        <div class="font-bold">Dagpass</div>
+                        <div class="text-xs text-slate-600">08:00-17:00</div>
+                    </button>
+                    <button onclick="selectWizardTemplate('evening')" class="preset-button text-left p-3">
+                        <div class="font-bold">Kvällspass</div>
+                        <div class="text-xs text-slate-600">14:00-22:00</div>
+                    </button>
+                    <button onclick="selectWizardTemplate('night')" class="preset-button text-left p-3">
+                        <div class="font-bold">Nattpass</div>
+                        <div class="text-xs text-slate-600">22:00-06:00</div>
+                    </button>
+                    <button onclick="selectWizardTemplate('12h_day')" class="preset-button text-left p-3">
+                        <div class="font-bold">12h Dag</div>
+                        <div class="text-xs text-slate-600">06:00-18:00</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Configure Times -->
+            <div id="wizardStep2" class="hidden space-y-3">
+                <div>
+                    <label class="block font-medium mb-1">Skiftnamn</label>
+                    <input type="text" id="wizardShiftName" placeholder="t.ex. Morgonpass"
+                           class="w-full px-3 py-2 border rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block font-medium mb-1">Start (HH:MM)</label>
-                        <input type="time" id="shiftStart" value="06:00" step="900"
-                               class="w-full px-2 py-1 border rounded" placeholder="06:00">
+                        <input type="time" id="wizardShiftStart" value="06:00"
+                               class="w-full px-3 py-2 border rounded">
                     </div>
                     <div>
                         <label class="block font-medium mb-1">Slut (HH:MM)</label>
-                        <input type="time" id="shiftEnd" value="14:00" step="900"
-                               class="w-full px-2 py-1 border rounded" placeholder="14:00">
+                        <input type="time" id="wizardShiftEnd" value="14:00"
+                               class="w-full px-3 py-2 border rounded">
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 -mt-2">24-timmarsformat (t.ex. 06:00, 14:00, 22:00)</p>
-                <div class="grid grid-cols-3 gap-2">
+                <p class="text-xs text-slate-500">Format: 24-timmars (06:00, 14:00, 22:00)</p>
+            </div>
+
+            <!-- Step 3: Staffing -->
+            <div id="wizardStep3" class="hidden space-y-3">
+                <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="block font-medium mb-1">Veckor</label>
-                        <input type="number" id="rotationWeeks" value="1" min="1" max="8"
-                               class="w-full px-2 py-1 border rounded" onchange="updateRotationUI()">
+                        <label class="block font-medium mb-1">Rotationsveckor</label>
+                        <input type="number" id="wizardRotationWeeks" value="1" min="1" max="8"
+                               class="w-full px-3 py-2 border rounded" onchange="updateWizardRotationUI()">
                     </div>
                     <div>
-                        <label class="block font-medium mb-1">Team</label>
-                        <input type="number" id="numTeams" value="1" min="1" max="6"
-                               class="w-full px-2 py-1 border rounded">
+                        <label class="block font-medium mb-1">Antal team</label>
+                        <input type="number" id="wizardNumTeams" value="1" min="1" max="6"
+                               class="w-full px-3 py-2 border rounded">
                     </div>
                     <div>
                         <label class="block font-medium mb-1">FTE/team</label>
-                        <input type="number" id="shiftFTE" value="5" min="0.5" max="50" step="0.5"
-                               class="w-full px-2 py-1 border rounded">
+                        <input type="number" id="wizardShiftFTE" value="5" min="0.5" max="50" step="0.5"
+                               class="w-full px-3 py-2 border rounded">
                     </div>
                 </div>
-                <div id="weekPatternsContainer"></div>
+                <div id="wizardWeekPatterns"></div>
                 <div>
                     <label class="block font-medium mb-1">Färg</label>
-                    <select id="shiftColor" class="w-full px-2 py-1 border rounded">
+                    <select id="wizardShiftColor" class="w-full px-3 py-2 border rounded">
                         <option value="1">Blå</option>
                         <option value="2">Lila</option>
                         <option value="3">Rosa</option>
@@ -322,11 +578,19 @@
                     </select>
                 </div>
             </div>
-            <div class="flex gap-2 mt-4">
-                <button onclick="saveShift()" class="flex-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Spara
+
+            <!-- Wizard Navigation -->
+            <div class="flex gap-2 mt-6">
+                <button id="wizardBack" onclick="wizardBack()" class="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300 hidden">
+                    ← Tillbaka
                 </button>
-                <button onclick="hideShiftModal()" class="px-3 py-1 bg-slate-200 rounded hover:bg-slate-300">
+                <button id="wizardNext" onclick="wizardNext()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Nästa →
+                </button>
+                <button id="wizardFinish" onclick="wizardFinish()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 hidden">
+                    ✓ Slutför
+                </button>
+                <button onclick="hideWizard()" class="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300">
                     Avbryt
                 </button>
             </div>
@@ -338,42 +602,53 @@
         let currentDate = new Date();
         let currentYear = currentDate.getFullYear();
         let currentMonth = currentDate.getMonth();
+        let wizardStep = 1;
+        let wizardTemplate = null;
+        let editingShiftId = null;
 
         const MONTHS = ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
                         'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'];
 
         const ROTATION_PRESETS = {
             continental: {
-                name: 'Continental',
+                name: 'Continental 8h',
+                description: '4 team, 2 morgon, 2 kväll, 2 natt, 2 ledigt',
                 shifts: [
                     { name: 'Morgon', start: '06:00', end: '14:00', weeks: 1, teams: 4, pattern: [[1,2]], fte: 1 },
                     { name: 'Kväll', start: '14:00', end: '22:00', weeks: 1, teams: 4, pattern: [[1,2]], fte: 1 },
                     { name: 'Natt', start: '22:00', end: '06:00', weeks: 1, teams: 4, pattern: [[1,2]], fte: 1 }
-                ]
+                ],
+                recommended: true
             },
             dupont: {
-                name: 'DuPont',
+                name: 'DuPont 12h',
+                description: '12h rotation, 4 team, komplext roterande schema',
                 shifts: [
                     { name: 'Dag', start: '06:00', end: '18:00', weeks: 4, teams: 4, pattern: [[1,2,3,4],[1,2,3],[1,2,3,4]], fte: 1 },
                     { name: 'Natt', start: '18:00', end: '06:00', weeks: 4, teams: 4, pattern: [[1,2,3,4],[1,2,3],[1,2,3,4]], fte: 1 }
-                ]
+                ],
+                recommended: true
             },
             pitman: {
-                name: 'Pitman',
+                name: 'Pitman 2-2-3',
+                description: '12h skift, 2 på-2 av-3 på mönster',
                 shifts: [
                     { name: 'Dag', start: '06:00', end: '18:00', weeks: 2, teams: 4, pattern: [[1,2,5,6,0],[1,2]], fte: 1 },
                     { name: 'Natt', start: '18:00', end: '06:00', weeks: 2, teams: 4, pattern: [[3,4,0],[3,4,5,6,0]], fte: 1 }
-                ]
+                ],
+                recommended: true
             },
             panama: {
-                name: 'Panama',
+                name: 'Panama 2-2-3',
+                description: 'Panama rotation, variant av Pitman',
                 shifts: [
                     { name: 'Dag', start: '07:00', end: '19:00', weeks: 2, teams: 4, pattern: [[1,2,5,6,0],[3,4]], fte: 1 },
                     { name: 'Natt', start: '19:00', end: '07:00', weeks: 2, teams: 4, pattern: [[3,4],[1,2,5,6,0]], fte: 1 }
                 ]
             },
             '24_7_8h': {
-                name: '24/7 Tre Skift',
+                name: '24/7 3-skift',
+                description: 'Klassisk 3-skifts rotation',
                 shifts: [
                     { name: 'Morgon', start: '06:00', end: '14:00', weeks: 1, teams: 3, pattern: [[1,2,3,4,5]], fte: 2 },
                     { name: 'Kväll', start: '14:00', end: '22:00', weeks: 1, teams: 3, pattern: [[1,2,3,4,5]], fte: 2 },
@@ -381,13 +656,15 @@
                 ]
             },
             '5_8': {
-                name: '5x8',
+                name: '5x8 Standard',
+                description: 'Standard kontorsdagar',
                 shifts: [
                     { name: 'Dagskift', start: '08:00', end: '17:00', weeks: 1, teams: 1, pattern: [[1,2,3,4,5]], fte: 10 }
                 ]
             },
             '4_10': {
-                name: '4x10',
+                name: '4x10 Vecka',
+                description: 'Komprimerad arbetsvecka',
                 shifts: [
                     { name: '4x10', start: '07:00', end: '17:00', weeks: 1, teams: 1, pattern: [[1,2,3,4]], fte: 10 }
                 ]
@@ -398,27 +675,71 @@
             if (!loadFromLocalStorage()) {
                 loadExampleShifts();
             }
+            renderPatternCards();
             renderCalendar();
             renderShiftsList();
             calculate();
         });
 
-        function loadExampleShifts() {
-            shifts = [
-                { id: 1, name: 'Morgon', startTime: '06:00', endTime: '14:00', rotationWeeks: 1, numTeams: 1, weekPatterns: [[1,2,3,4,5]], fte: 8, color: 1 },
-                { id: 2, name: 'Kväll', startTime: '14:00', endTime: '22:00', rotationWeeks: 1, numTeams: 1, weekPatterns: [[1,2,3,4,5]], fte: 8, color: 2 }
-            ];
+        function dismissQuickStart() {
+            document.getElementById('quickStartBanner').style.display = 'none';
+            localStorage.setItem('quickStartDismissed', 'true');
         }
 
-        function applyRotationPreset() {
-            const preset = document.getElementById('rotationPreset').value;
-            if (!preset) return;
+        // Check if quick start was dismissed
+        if (localStorage.getItem('quickStartDismissed') === 'true') {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('quickStartBanner').style.display = 'none';
+            });
+        }
 
-            const pattern = ROTATION_PRESETS[preset];
-            if (confirm(`Tillämpa ${pattern.name}? Detta ersätter alla skift.`)) {
-                shifts = [];
-                let id = 1;
-                pattern.shifts.forEach(s => {
+        function renderPatternCards() {
+            const container = document.getElementById('patternCards');
+            container.innerHTML = '';
+
+            Object.entries(ROTATION_PRESETS).forEach(([key, preset]) => {
+                const card = document.createElement('div');
+                card.className = 'pattern-card relative';
+                card.onclick = () => togglePatternSelection(key);
+
+                const isRecommended = preset.recommended ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Rekommenderad</span>' : '';
+
+                card.innerHTML = `
+                    <div class="font-bold text-xs mb-1">${preset.name}</div>
+                    <div class="text-xs text-slate-600 mb-2">${preset.description}</div>
+                    ${isRecommended}
+                `;
+
+                // Auto-select recommended patterns
+                if (preset.recommended) {
+                    card.classList.add('selected');
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        function togglePatternSelection(presetKey) {
+            const card = event.currentTarget;
+            card.classList.toggle('selected');
+        }
+
+        function applySelectedPatterns() {
+            const selectedCards = document.querySelectorAll('.pattern-card.selected');
+            if (selectedCards.length === 0) {
+                alert('Välj minst en rotationsmall');
+                return;
+            }
+
+            shifts = [];
+            let id = 1;
+
+            selectedCards.forEach(card => {
+                const cardIndex = Array.from(card.parentElement.children).indexOf(card);
+                const presetKey = Object.keys(ROTATION_PRESETS)[cardIndex];
+                const preset = ROTATION_PRESETS[presetKey];
+
+                preset.shifts.forEach(s => {
                     shifts.push({
                         id: id++,
                         name: s.name,
@@ -431,10 +752,277 @@
                         color: (id % 8) || 1
                     });
                 });
-                renderShiftsList();
-                renderCalendar();
+            });
+
+            renderShiftsList();
+            renderCalendar();
+            calculate();
+        }
+
+        function applyPreset(presetType) {
+            // Remove active class from all preset buttons
+            document.querySelectorAll('.preset-button').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if (presetType === 'pharma') {
+                document.getElementById('totalFTE').value = 44;
+                document.getElementById('fteCost').value = 750000;
+                document.getElementById('coverageMF').value = 24;
+                document.getElementById('coverageSat').value = 24;
+                document.getElementById('coverageSun').value = 24;
+
+                // Select Continental and DuPont patterns
+                const cards = document.querySelectorAll('.pattern-card');
+                cards.forEach(card => card.classList.remove('selected'));
+                cards[0].classList.add('selected'); // Continental
+                cards[1].classList.add('selected'); // DuPont
+                applySelectedPatterns();
+            } else if (presetType === 'continuous') {
+                document.getElementById('totalFTE').value = 50;
+                document.getElementById('fteCost').value = 650000;
+                document.getElementById('coverageMF').value = 24;
+                document.getElementById('coverageSat').value = 24;
+                document.getElementById('coverageSun').value = 24;
+
+                const cards = document.querySelectorAll('.pattern-card');
+                cards.forEach(card => card.classList.remove('selected'));
+                cards[4].classList.add('selected'); // 24/7 3-shift
+                applySelectedPatterns();
+            } else if (presetType === 'cost_optimized') {
+                document.getElementById('totalFTE').value = 30;
+                document.getElementById('fteCost').value = 550000;
+                document.getElementById('coverageMF').value = 9;
+                document.getElementById('coverageSat').value = 0;
+                document.getElementById('coverageSun').value = 0;
+
+                const cards = document.querySelectorAll('.pattern-card');
+                cards.forEach(card => card.classList.remove('selected'));
+                cards[5].classList.add('selected'); // 5x8
+                applySelectedPatterns();
+            }
+        }
+
+        function toggleSection(sectionName) {
+            const section = document.getElementById(`${sectionName}-section`);
+            const toggle = document.getElementById(`${sectionName}-toggle`);
+
+            if (section.classList.contains('expanded')) {
+                section.classList.remove('expanded');
+                section.classList.add('collapsed');
+                toggle.textContent = '▶';
+            } else {
+                section.classList.remove('collapsed');
+                section.classList.add('expanded');
+                toggle.textContent = '▼';
+            }
+        }
+
+        function validateInput(inputId, min, max, errorMsg) {
+            const input = document.getElementById(inputId);
+            const errorDiv = document.getElementById(`${inputId}-error`);
+            const value = parseFloat(input.value);
+
+            if (isNaN(value) || value < min || value > max) {
+                input.classList.add('error');
+                errorDiv.textContent = errorMsg;
+                errorDiv.classList.remove('hidden');
+                return false;
+            } else {
+                input.classList.remove('error');
+                errorDiv.classList.add('hidden');
+                return true;
+            }
+        }
+
+        function validateAndCalculate() {
+            let isValid = true;
+
+            isValid &= validateInput('totalFTE', 1, 200, 'Budget måste vara 1-200 FTE');
+            isValid &= validateInput('fteCost', 300000, 2000000, 'Kostnad måste vara 300k-2000k SEK');
+            isValid &= validateInput('coverageMF', 0, 168, 'Täckning måste vara 0-168 timmar');
+
+            if (isValid) {
                 calculate();
             }
+        }
+
+        function loadExampleShifts() {
+            shifts = [
+                { id: 1, name: 'Morgon', startTime: '06:00', endTime: '14:00', rotationWeeks: 1, numTeams: 1, weekPatterns: [[1,2,3,4,5]], fte: 8, color: 1 },
+                { id: 2, name: 'Kväll', startTime: '14:00', endTime: '22:00', rotationWeeks: 1, numTeams: 1, weekPatterns: [[1,2,3,4,5]], fte: 8, color: 2 }
+            ];
+        }
+
+        // Wizard Functions
+        function showWizard(shiftId = null) {
+            wizardStep = 1;
+            editingShiftId = shiftId;
+            wizardTemplate = null;
+
+            updateWizardUI();
+            document.getElementById('wizardModal').classList.remove('hidden');
+
+            if (shiftId) {
+                const shift = shifts.find(s => s.id === shiftId);
+                if (shift) {
+                    document.getElementById('wizardShiftName').value = shift.name;
+                    document.getElementById('wizardShiftStart').value = shift.startTime;
+                    document.getElementById('wizardShiftEnd').value = shift.endTime;
+                    document.getElementById('wizardShiftFTE').value = shift.fte;
+                    document.getElementById('wizardShiftColor').value = shift.color;
+                    document.getElementById('wizardRotationWeeks').value = shift.rotationWeeks;
+                    document.getElementById('wizardNumTeams').value = shift.numTeams;
+                }
+            }
+        }
+
+        function hideWizard() {
+            document.getElementById('wizardModal').classList.add('hidden');
+        }
+
+        function selectWizardTemplate(template) {
+            wizardTemplate = template;
+
+            const templates = {
+                morning: { name: 'Morgonpass', start: '06:00', end: '14:00' },
+                day: { name: 'Dagpass', start: '08:00', end: '17:00' },
+                evening: { name: 'Kvällspass', start: '14:00', end: '22:00' },
+                night: { name: 'Nattpass', start: '22:00', end: '06:00' },
+                '12h_day': { name: '12h Dagpass', start: '06:00', end: '18:00' },
+                custom: { name: '', start: '06:00', end: '14:00' }
+            };
+
+            const t = templates[template];
+            document.getElementById('wizardShiftName').value = t.name;
+            document.getElementById('wizardShiftStart').value = t.start;
+            document.getElementById('wizardShiftEnd').value = t.end;
+
+            wizardNext();
+        }
+
+        function wizardNext() {
+            if (wizardStep < 3) {
+                wizardStep++;
+                updateWizardUI();
+            }
+        }
+
+        function wizardBack() {
+            if (wizardStep > 1) {
+                wizardStep--;
+                updateWizardUI();
+            }
+        }
+
+        function updateWizardUI() {
+            // Hide all steps
+            for (let i = 1; i <= 3; i++) {
+                document.getElementById(`wizardStep${i}`).classList.add('hidden');
+                const indicator = document.getElementById(`step${i}-indicator`);
+                indicator.classList.remove('active', 'complete');
+            }
+
+            // Show current step
+            document.getElementById(`wizardStep${wizardStep}`).classList.remove('hidden');
+
+            // Update indicators
+            for (let i = 1; i < wizardStep; i++) {
+                document.getElementById(`step${i}-indicator`).classList.add('complete');
+            }
+            document.getElementById(`step${wizardStep}-indicator`).classList.add('active');
+
+            // Update buttons
+            document.getElementById('wizardBack').classList.toggle('hidden', wizardStep === 1);
+            document.getElementById('wizardNext').classList.toggle('hidden', wizardStep === 3);
+            document.getElementById('wizardFinish').classList.toggle('hidden', wizardStep !== 3);
+
+            if (wizardStep === 3) {
+                updateWizardRotationUI();
+            }
+        }
+
+        function updateWizardRotationUI() {
+            const numWeeks = parseInt(document.getElementById('wizardRotationWeeks').value);
+            const container = document.getElementById('wizardWeekPatterns');
+            container.innerHTML = '';
+
+            for (let week = 1; week <= numWeeks; week++) {
+                const div = document.createElement('div');
+                div.className = 'p-2 bg-slate-50 rounded mb-2';
+                div.innerHTML = `
+                    <label class="block font-medium mb-1 text-xs">Vecka ${week} - Arbetsdagar</label>
+                    <div class="flex gap-1 flex-wrap week-days" data-week="${week}">
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="1"> Mån
+                        </label>
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="2"> Tis
+                        </label>
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="3"> Ons
+                        </label>
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="4"> Tor
+                        </label>
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="5"> Fre
+                        </label>
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="6"> Lör
+                        </label>
+                        <label class="flex items-center gap-0.5 text-xs">
+                            <input type="checkbox" class="shift-day" value="0"> Sön
+                        </label>
+                    </div>
+                `;
+                container.appendChild(div);
+            }
+
+            // Pre-select Mon-Fri for first week if creating new shift
+            if (!editingShiftId) {
+                const firstWeek = container.querySelector('.week-days[data-week="1"]');
+                if (firstWeek) {
+                    firstWeek.querySelectorAll('.shift-day').forEach((cb, idx) => {
+                        if (idx < 5) cb.checked = true; // Mon-Fri
+                    });
+                }
+            }
+        }
+
+        function wizardFinish() {
+            const name = document.getElementById('wizardShiftName').value;
+            const start = document.getElementById('wizardShiftStart').value;
+            const end = document.getElementById('wizardShiftEnd').value;
+            const fte = parseFloat(document.getElementById('wizardShiftFTE').value);
+            const color = parseInt(document.getElementById('wizardShiftColor').value);
+            const rotationWeeks = parseInt(document.getElementById('wizardRotationWeeks').value);
+            const numTeams = parseInt(document.getElementById('wizardNumTeams').value);
+
+            const weekPatterns = [];
+            document.querySelectorAll('.week-days').forEach(weekContainer => {
+                const days = Array.from(weekContainer.querySelectorAll('.shift-day:checked'))
+                    .map(cb => parseInt(cb.value));
+                weekPatterns.push(days);
+            });
+
+            if (!name || weekPatterns.every(p => p.length === 0) || fte <= 0) {
+                alert('Fyll i alla obligatoriska fält');
+                return;
+            }
+
+            if (editingShiftId) {
+                const shift = shifts.find(s => s.id === editingShiftId);
+                if (shift) {
+                    Object.assign(shift, { name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
+                }
+            } else {
+                shifts.push({ id: Date.now(), name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
+            }
+
+            hideWizard();
+            renderShiftsList();
+            renderCalendar();
+            calculate();
         }
 
         function previousMonth() {
@@ -459,15 +1047,12 @@
             document.getElementById('currentMonth').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
 
             const grid = document.getElementById('calendarGrid');
-
-            // Remove all day cells (keep headers)
             const days = grid.querySelectorAll('.calendar-day');
             days.forEach(day => day.remove());
 
             const firstDay = new Date(currentYear, currentMonth, 1);
             let startDate = new Date(firstDay);
 
-            // Get first Monday - JS getDay(): 0=Sun, 1=Mon, ..., 6=Sat
             const firstDayOfWeek = firstDay.getDay();
             const daysToMonday = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
             startDate.setDate(firstDay.getDate() - daysToMonday);
@@ -475,7 +1060,6 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Render 6 weeks - append directly to grid
             for (let i = 0; i < 42; i++) {
                 const currentDay = new Date(startDate);
                 currentDay.setDate(startDate.getDate() + i);
@@ -489,7 +1073,6 @@
                 if (!isCurrentMonth) dayDiv.classList.add('other-month');
                 if (isToday) dayDiv.classList.add('today');
 
-                // Get day of week: 0=Sun, 1=Mon, ..., 6=Sat (matching our weekPatterns)
                 const dayOfWeek = currentDay.getDay();
                 const shiftsForDay = getShiftsForDay(currentDay, dayOfWeek);
 
@@ -513,7 +1096,7 @@
                     shiftBar.className = `shift-bar shift-color-${shift.color}`;
                     shiftBar.textContent = `${shift.name} ${shift.startTime}-${shift.endTime}`;
                     shiftBar.title = `${shift.name}\n${shift.startTime}-${shift.endTime}\n${shift.fte} FTE`;
-                    shiftBar.onclick = () => showEditShiftModal(shift.id);
+                    shiftBar.onclick = () => showWizard(shift.id);
                     dayDiv.appendChild(shiftBar);
                 });
 
@@ -555,7 +1138,6 @@
         }
 
         function getRequiredCoverage(dayOfWeek) {
-            // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
                 return parseFloat(document.getElementById('coverageMF').value);
             } else if (dayOfWeek === 6) {
@@ -568,129 +1150,6 @@
         function timeToHours(timeStr) {
             const [hours, minutes] = timeStr.split(':').map(Number);
             return hours + minutes / 60;
-        }
-
-        function updateRotationUI() {
-            const numWeeks = parseInt(document.getElementById('rotationWeeks').value);
-            const container = document.getElementById('weekPatternsContainer');
-            container.innerHTML = '';
-
-            for (let week = 1; week <= numWeeks; week++) {
-                const div = document.createElement('div');
-                div.className = 'p-2 bg-slate-50 rounded';
-                div.innerHTML = `
-                    <label class="block font-medium mb-1">Vecka ${week}</label>
-                    <div class="flex gap-1 flex-wrap week-days" data-week="${week}">
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="1"> Mån
-                        </label>
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="2"> Tis
-                        </label>
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="3"> Ons
-                        </label>
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="4"> Tor
-                        </label>
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="5"> Fre
-                        </label>
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="6"> Lör
-                        </label>
-                        <label class="flex items-center gap-0.5">
-                            <input type="checkbox" class="shift-day" value="0"> Sön
-                        </label>
-                    </div>
-                `;
-                container.appendChild(div);
-            }
-        }
-
-        function showAddShiftModal() {
-            document.getElementById('modalTitle').textContent = 'Lägg till skift';
-            document.getElementById('editShiftId').value = '';
-            document.getElementById('shiftName').value = '';
-            document.getElementById('shiftStart').value = '06:00';
-            document.getElementById('shiftEnd').value = '14:00';
-            document.getElementById('shiftFTE').value = '5';
-            document.getElementById('shiftColor').value = '1';
-            document.getElementById('rotationWeeks').value = '1';
-            document.getElementById('numTeams').value = '1';
-            updateRotationUI();
-            document.getElementById('shiftModal').classList.remove('hidden');
-        }
-
-        function showEditShiftModal(id) {
-            const shift = shifts.find(s => s.id === id);
-            if (!shift) return;
-
-            document.getElementById('modalTitle').textContent = 'Redigera skift';
-            document.getElementById('editShiftId').value = id;
-            document.getElementById('shiftName').value = shift.name;
-            document.getElementById('shiftStart').value = shift.startTime;
-            document.getElementById('shiftEnd').value = shift.endTime;
-            document.getElementById('shiftFTE').value = shift.fte;
-            document.getElementById('shiftColor').value = shift.color;
-            document.getElementById('rotationWeeks').value = shift.rotationWeeks;
-            document.getElementById('numTeams').value = shift.numTeams;
-
-            updateRotationUI();
-
-            setTimeout(() => {
-                shift.weekPatterns.forEach((pattern, weekIdx) => {
-                    const weekContainer = document.querySelector(`.week-days[data-week="${weekIdx + 1}"]`);
-                    if (weekContainer) {
-                        weekContainer.querySelectorAll('.shift-day').forEach(cb => {
-                            cb.checked = pattern.includes(parseInt(cb.value));
-                        });
-                    }
-                });
-            }, 50);
-
-            document.getElementById('shiftModal').classList.remove('hidden');
-        }
-
-        function hideShiftModal() {
-            document.getElementById('shiftModal').classList.add('hidden');
-        }
-
-        function saveShift() {
-            const name = document.getElementById('shiftName').value;
-            const start = document.getElementById('shiftStart').value;
-            const end = document.getElementById('shiftEnd').value;
-            const fte = parseFloat(document.getElementById('shiftFTE').value);
-            const color = parseInt(document.getElementById('shiftColor').value);
-            const rotationWeeks = parseInt(document.getElementById('rotationWeeks').value);
-            const numTeams = parseInt(document.getElementById('numTeams').value);
-            const editId = document.getElementById('editShiftId').value;
-
-            const weekPatterns = [];
-            document.querySelectorAll('.week-days').forEach(weekContainer => {
-                const days = Array.from(weekContainer.querySelectorAll('.shift-day:checked'))
-                    .map(cb => parseInt(cb.value));
-                weekPatterns.push(days);
-            });
-
-            if (!name || weekPatterns.every(p => p.length === 0) || fte <= 0) {
-                alert('Fyll i alla fält');
-                return;
-            }
-
-            if (editId) {
-                const shift = shifts.find(s => s.id === parseInt(editId));
-                if (shift) {
-                    Object.assign(shift, { name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
-                }
-            } else {
-                shifts.push({ id: Date.now(), name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
-            }
-
-            hideShiftModal();
-            renderShiftsList();
-            renderCalendar();
-            calculate();
         }
 
         function deleteShift(id) {
@@ -708,7 +1167,7 @@
             shifts.forEach(shift => {
                 const div = document.createElement('div');
                 div.className = 'p-1 bg-slate-50 rounded border cursor-pointer hover:bg-slate-100';
-                div.onclick = () => showEditShiftModal(shift.id);
+                div.onclick = () => showWizard(shift.id);
                 div.innerHTML = `
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1">
@@ -746,11 +1205,11 @@
             const budget = parseFloat(document.getElementById('totalFTE').value);
 
             if (totalFTE > budget) {
-                container.innerHTML = '⚠️ Över budget';
+                container.innerHTML = '⚠️ Över budget med ' + (totalFTE - budget).toFixed(1) + ' FTE';
             } else if (totalFTE < budget * 0.7) {
-                container.innerHTML = '💡 Outnyttjad kapacitet';
+                container.innerHTML = '💡 ' + (budget - totalFTE).toFixed(1) + ' FTE outnyttjat';
             } else {
-                container.innerHTML = '✅ Balanserat';
+                container.innerHTML = '✅ Balanserat schema';
             }
         }
 
@@ -804,7 +1263,7 @@
                 coverageSun: document.getElementById('coverageSun').value
             };
             localStorage.setItem('shiftScheduleData', JSON.stringify(data));
-            alert('Sparat!');
+            alert('Schema sparat!');
         }
 
         function loadFromLocalStorage() {
