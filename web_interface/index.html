@@ -3,380 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skiftschema Analysator Pro</title>
+    <title>Skiftschema Kalender</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        .shift-block {
-            cursor: move;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-        .shift-block:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .shift-block.dragging {
-            opacity: 0.4;
-        }
-        .time-slot {
-            min-height: 70px;
-            border: 1px solid #e2e8f0;
-        }
-        .time-slot.drag-over {
-            background-color: #dbeafe;
-            border-color: #3b82f6;
-            border-width: 2px;
-        }
-        .coverage-bar {
-            transition: width 0.3s ease;
-        }
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        .collapsible-content.open {
-            max-height: 3000px;
-        }
-        /* Muted professional colors with opacity */
-        .shift-color-1 { background-color: rgba(59, 130, 246, 0.75); } /* Blue */
-        .shift-color-2 { background-color: rgba(139, 92, 246, 0.75); } /* Purple */
-        .shift-color-3 { background-color: rgba(236, 72, 153, 0.75); } /* Pink */
-        .shift-color-4 { background-color: rgba(245, 158, 11, 0.75); } /* Orange */
-        .shift-color-5 { background-color: rgba(16, 185, 129, 0.75); } /* Green */
-        .shift-color-6 { background-color: rgba(6, 182, 212, 0.75); } /* Cyan */
-        .shift-color-7 { background-color: rgba(239, 68, 68, 0.75); } /* Red */
-
-        /* Calendar hour columns */
         .calendar-grid {
             display: grid;
-            grid-template-columns: 100px repeat(24, minmax(40px, 1fr));
-            gap: 1px;
-            background: #e2e8f0;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            background: #cbd5e1;
         }
-        .calendar-hour {
+        .calendar-day {
             background: white;
-            border-right: 1px solid #e2e8f0;
-            min-height: 60px;
+            min-height: 140px;
+            padding: 8px;
             position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .calendar-day-label {
+        .calendar-day:hover {
+            background: #f8fafc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .calendar-day.other-month {
             background: #f1f5f9;
+            opacity: 0.6;
+        }
+        .calendar-day.today {
+            border: 2px solid #3b82f6;
+        }
+        .day-header {
             font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 0 12px;
         }
         .shift-bar {
-            position: absolute;
-            height: 90%;
-            top: 5%;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.65rem;
+            padding: 2px 4px;
+            margin: 2px 0;
+            border-radius: 3px;
             color: white;
-            cursor: pointer;
+            font-weight: 500;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
-            padding: 2px 4px;
+            cursor: pointer;
         }
-        .hour-header {
-            background: #f8fafc;
-            text-align: center;
-            padding: 4px 2px;
+        .shift-bar:hover {
+            opacity: 0.8;
+        }
+        .shift-color-1 { background-color: #3b82f6; } /* Blue */
+        .shift-color-2 { background-color: #8b5cf6; } /* Purple */
+        .shift-color-3 { background-color: #ec4899; } /* Pink */
+        .shift-color-4 { background-color: #f59e0b; } /* Orange */
+        .shift-color-5 { background-color: #10b981; } /* Green */
+        .shift-color-6 { background-color: #06b6d4; } /* Cyan */
+        .shift-color-7 { background-color: #ef4444; } /* Red */
+        .shift-color-8 { background-color: #6366f1; } /* Indigo */
+
+        .day-summary {
             font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .weekday-header {
+            background: #1e293b;
+            color: white;
+            padding: 12px;
+            text-align: center;
             font-weight: 600;
-            color: #475569;
-            border-bottom: 2px solid #cbd5e1;
+            font-size: 0.875rem;
+        }
+
+        .coverage-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 4px;
+        }
+        .coverage-good { background: #10b981; }
+        .coverage-partial { background: #f59e0b; }
+        .coverage-poor { background: #ef4444; }
+
+        .suggestion-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .rotation-pattern {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 2px;
+            background: #e0e7ff;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-blue-50">
-    <div class="min-h-screen p-3 md:p-6">
+    <div class="min-h-screen p-4">
         <div class="max-w-[1800px] mx-auto">
             <!-- Header -->
             <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
                 <div class="flex items-center justify-between flex-wrap gap-3">
                     <div>
                         <h1 class="text-2xl font-bold text-slate-800 mb-1">
-                            📊 Skiftschema Analysator Pro
+                            📅 Skiftschema Kalender
                         </h1>
                         <p class="text-sm text-slate-600">
-                            Visuell kalenderbaserad skiftplanering med drag-och-släpp redigering
+                            Månadsvy med FTE-beräkningar och öppettider per dag
                         </p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="saveToLocalStorage()" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                        <button onclick="previousMonth()" class="px-3 py-2 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700">
+                            ← Föregående
+                        </button>
+                        <button onclick="nextMonth()" class="px-3 py-2 bg-slate-600 text-white text-sm rounded-lg hover:bg-slate-700">
+                            Nästa →
+                        </button>
+                        <button onclick="saveToLocalStorage()" class="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
                             💾 Spara
                         </button>
-                        <button onclick="loadFromLocalStorage()" class="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                        <button onclick="loadFromLocalStorage()" class="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
                             📂 Ladda
                         </button>
-                        <button onclick="exportSchedule()" class="px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors">
+                        <button onclick="exportSchedule()" class="px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700">
                             📥 Exportera CSV
                         </button>
-                        <button onclick="clearAll()" class="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors">
-                            🗑️ Rensa allt
-                        </button>
                     </div>
+                </div>
+
+                <!-- Month Navigation -->
+                <div class="flex items-center justify-center gap-4 mt-4 p-3 bg-slate-50 rounded">
+                    <h2 class="text-xl font-bold text-slate-800" id="currentMonth">December 2025</h2>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
-                <!-- Compact Sidebar -->
+                <!-- Sidebar -->
                 <div class="xl:col-span-3 space-y-4">
-                    <!-- Process & Budget -->
+                    <!-- Process Settings -->
                     <div class="bg-white rounded-lg shadow-lg p-4">
-                        <button onclick="toggleSection('process')" class="w-full flex items-center justify-between text-left font-bold text-slate-800 mb-3">
-                            <span>⚙️ Processinställningar</span>
-                            <span id="process-toggle">▼</span>
-                        </button>
-                        <div id="process-section" class="collapsible-content open space-y-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Processnamn</label>
-                                <input type="text" id="processName" value="Produktionslinje A" onchange="calculate()"
-                                       class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
-                            </div>
+                        <h3 class="font-bold text-slate-800 mb-3">⚙️ Inställningar</h3>
+                        <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-700 mb-1">Total FTE Budget</label>
                                 <input type="number" id="totalFTE" value="44" min="1" max="200" onchange="calculate()"
                                        class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Valuta</label>
-                                <select id="currency" onchange="calculate()" class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
-                                    <option value="SEK">SEK (Svenska Kronor)</option>
-                                    <option value="USD">USD (Dollar)</option>
-                                    <option value="EUR">EUR (Euro)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Cost Parameters -->
-                    <div class="bg-white rounded-lg shadow-lg p-4">
-                        <button onclick="toggleSection('cost')" class="w-full flex items-center justify-between text-left font-bold text-slate-800 mb-3">
-                            <span>💰 Kostnad & Frånvaro</span>
-                            <span id="cost-toggle">▼</span>
-                        </button>
-                        <div id="cost-section" class="collapsible-content open space-y-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-700 mb-1">FTE-kostnad per år</label>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">FTE-kostnad per år (SEK)</label>
                                 <input type="number" id="fteCost" value="650000" min="100000" max="2000000" step="10000" onchange="calculate()"
                                        class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
-                                <p class="text-xs text-slate-500 mt-1">Svenskt snitt: 650k SEK (inkl. förmåner)</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" id="includeAbsences" checked onchange="toggleAbsences()" class="w-3 h-3">
-                                <label class="text-xs font-medium text-slate-700">Ta hänsyn till frånvaro</label>
-                            </div>
-                            <div id="absencesSection" class="pl-4 space-y-2 border-l-2 border-blue-200">
-                                <div>
-                                    <label class="block text-xs text-slate-600 mb-1">Semesterdagar</label>
-                                    <input type="number" id="vacationDays" value="25" min="0" max="50" onchange="calculate()"
-                                           class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-slate-600 mb-1">Helgdagar</label>
-                                    <input type="number" id="holidays" value="13" min="0" max="20" onchange="calculate()"
-                                           class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-slate-600 mb-1">Sjukdagar</label>
-                                    <input type="number" id="sickDays" value="7" min="0" max="30" onchange="calculate()"
-                                           class="w-full px-2 py-1.5 text-sm border border-slate-300 rounded">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Custom Shift Builder -->
-                    <div class="bg-white rounded-lg shadow-lg p-4">
-                        <button onclick="toggleSection('shifts')" class="w-full flex items-center justify-between text-left font-bold text-slate-800 mb-3">
-                            <span>🔧 Skiftmallar</span>
-                            <span id="shifts-toggle">▼</span>
-                        </button>
-                        <div id="shifts-section" class="collapsible-content open space-y-3">
-                            <div class="space-y-2" id="shiftsList">
-                                <!-- Shifts will be dynamically added here -->
-                            </div>
-                            <button onclick="showAddShiftModal()" class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-                                + Lägg till nytt skift
-                            </button>
                         </div>
                     </div>
 
                     <!-- Coverage Requirements -->
                     <div class="bg-white rounded-lg shadow-lg p-4">
-                        <button onclick="toggleSection('coverage')" class="w-full flex items-center justify-between text-left font-bold text-slate-800 mb-3">
-                            <span>📊 Täckningskrav</span>
-                            <span id="coverage-toggle">▼</span>
-                        </button>
-                        <div id="coverage-section" class="collapsible-content open space-y-2">
-                            <div class="text-xs space-y-2">
-                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
-                                    <span>Måndag-Fredag</span>
-                                    <input type="number" id="coverageMF" value="24" min="0" max="24" onchange="calculate()"
-                                           class="w-16 px-2 py-1 text-xs border rounded">
-                                </div>
-                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
-                                    <span>Lördag</span>
-                                    <input type="number" id="coverageSat" value="12" min="0" max="24" onchange="calculate()"
-                                           class="w-16 px-2 py-1 text-xs border rounded">
-                                </div>
-                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
-                                    <span>Söndag</span>
-                                    <input type="number" id="coverageSun" value="0" min="0" max="24" onchange="calculate()"
-                                           class="w-16 px-2 py-1 text-xs border rounded">
-                                </div>
+                        <h3 class="font-bold text-slate-800 mb-3">📊 Täckningskrav (timmar/dag)</h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                <span>Måndag-Fredag</span>
+                                <input type="number" id="coverageMF" value="24" min="0" max="24" onchange="calculate()"
+                                       class="w-16 px-2 py-1 text-xs border rounded">
                             </div>
-                            <p class="text-xs text-slate-500 mt-2">Antal timmar täckning som krävs per dag</p>
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                <span>Lördag</span>
+                                <input type="number" id="coverageSat" value="12" min="0" max="24" onchange="calculate()"
+                                       class="w-16 px-2 py-1 text-xs border rounded">
+                            </div>
+                            <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                <span>Söndag</span>
+                                <input type="number" id="coverageSun" value="0" min="0" max="24" onchange="calculate()"
+                                       class="w-16 px-2 py-1 text-xs border rounded">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manufacturing Rotation Presets -->
+                    <div class="bg-white rounded-lg shadow-lg p-4">
+                        <h3 class="font-bold text-slate-800 mb-3">🏭 Standardrotationer</h3>
+                        <select id="rotationPreset" onchange="applyRotationPreset()"
+                                class="w-full px-3 py-2 text-sm border border-slate-300 rounded mb-2">
+                            <option value="">Välj en standardrotation...</option>
+                            <option value="continental">Continental (4 skift, 8h)</option>
+                            <option value="dupont">DuPont (12h rotation)</option>
+                            <option value="pitman">Pitman 2-2-3 (12h)</option>
+                            <option value="panama">Panama 2-2-3 (12h)</option>
+                            <option value="24_7_8h">24/7 (3 skift, 8h)</option>
+                            <option value="5_8">5 dagar, 8h (standard)</option>
+                            <option value="4_10">4 dagar, 10h</option>
+                        </select>
+                        <p class="text-xs text-slate-500">Välj ett vanligt industrimönster för att snabbt komma igång</p>
+                    </div>
+
+                    <!-- Shift Templates -->
+                    <div class="bg-white rounded-lg shadow-lg p-4">
+                        <h3 class="font-bold text-slate-800 mb-3">🔧 Skiftmallar</h3>
+                        <div class="space-y-2 mb-3" id="shiftsList">
+                            <!-- Shifts will be dynamically added here -->
+                        </div>
+                        <button onclick="showAddShiftModal()" class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                            + Lägg till skift
+                        </button>
+                    </div>
+
+                    <!-- KPIs -->
+                    <div class="bg-white rounded-lg shadow-lg p-4">
+                        <h3 class="font-bold text-slate-800 mb-3">📈 Nyckeltal</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-blue-50 rounded">
+                                <p class="text-xs text-slate-600 mb-1">Total FTE använt</p>
+                                <p class="text-xl font-bold text-slate-800" id="kpiTotalFTE">0</p>
+                                <p class="text-xs text-slate-500">av <span id="kpiBudget">44</span> budget</p>
+                            </div>
+                            <div class="p-3 bg-green-50 rounded">
+                                <p class="text-xs text-slate-600 mb-1">Utnyttjandegrad</p>
+                                <p class="text-xl font-bold text-green-600" id="kpiUtilization">0%</p>
+                            </div>
+                            <div class="p-3 bg-purple-50 rounded">
+                                <p class="text-xs text-slate-600 mb-1">Årlig kostnad</p>
+                                <p class="text-xl font-bold text-purple-600" id="kpiCost">0 kr</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Main Content Area -->
+                <!-- Main Calendar -->
                 <div class="xl:col-span-9 space-y-4">
-                    <!-- KPI Cards -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <p class="text-xs text-slate-600 mb-1">Totalt FTE använt</p>
-                            <p class="text-2xl font-bold text-slate-800" id="kpiTotalFTE">0</p>
-                            <p class="text-xs text-slate-500 mt-1">av <span id="kpiBudget">44</span> budget</p>
-                        </div>
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <p class="text-xs text-slate-600 mb-1">Utnyttjandegrad</p>
-                            <p class="text-2xl font-bold text-blue-600" id="kpiUtilization">0%</p>
-                            <p class="text-xs text-slate-500 mt-1">Mål: 85-95%</p>
-                        </div>
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <p class="text-xs text-slate-600 mb-1">Vecko täckning</p>
-                            <p class="text-2xl font-bold text-green-600" id="kpiCoverage">0 tim</p>
-                            <p class="text-xs text-slate-500 mt-1">av <span id="kpiTarget">156</span> tim mål</p>
-                        </div>
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <p class="text-xs text-slate-600 mb-1">Årlig kostnad</p>
-                            <p class="text-2xl font-bold text-purple-600" id="kpiCost">0 kr</p>
-                            <p class="text-xs text-slate-500 mt-1" id="kpiCostPerHour">SEK</p>
+                    <!-- Calendar -->
+                    <div class="bg-white rounded-lg shadow-lg p-4">
+                        <div class="calendar-grid">
+                            <!-- Weekday headers -->
+                            <div class="weekday-header">Måndag</div>
+                            <div class="weekday-header">Tisdag</div>
+                            <div class="weekday-header">Onsdag</div>
+                            <div class="weekday-header">Torsdag</div>
+                            <div class="weekday-header">Fredag</div>
+                            <div class="weekday-header">Lördag</div>
+                            <div class="weekday-header">Söndag</div>
+
+                            <!-- Calendar days will be generated here -->
+                            <div id="calendarDays"></div>
                         </div>
                     </div>
 
-                    <!-- Consolidated Calendar View -->
+                    <!-- AI Suggestions -->
                     <div class="bg-white rounded-lg shadow-lg p-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-bold text-slate-800">📅 Veckoschema</h2>
-                            <div class="text-xs text-slate-600">
-                                <span class="font-medium">Klicka på skift för att redigera</span>
-                            </div>
-                        </div>
-
-                        <!-- Consolidated Calendar -->
-                        <div class="overflow-x-auto">
-                            <div class="calendar-grid" style="min-width: 1400px;">
-                                <!-- Hour headers -->
-                                <div class="calendar-day-label"></div>
-                                <div class="hour-header">00</div>
-                                <div class="hour-header">01</div>
-                                <div class="hour-header">02</div>
-                                <div class="hour-header">03</div>
-                                <div class="hour-header">04</div>
-                                <div class="hour-header">05</div>
-                                <div class="hour-header">06</div>
-                                <div class="hour-header">07</div>
-                                <div class="hour-header">08</div>
-                                <div class="hour-header">09</div>
-                                <div class="hour-header">10</div>
-                                <div class="hour-header">11</div>
-                                <div class="hour-header">12</div>
-                                <div class="hour-header">13</div>
-                                <div class="hour-header">14</div>
-                                <div class="hour-header">15</div>
-                                <div class="hour-header">16</div>
-                                <div class="hour-header">17</div>
-                                <div class="hour-header">18</div>
-                                <div class="hour-header">19</div>
-                                <div class="hour-header">20</div>
-                                <div class="hour-header">21</div>
-                                <div class="hour-header">22</div>
-                                <div class="hour-header">23</div>
-
-                                <!-- Calendar rows will be generated by JS -->
-                                <div id="calendarRows"></div>
-                            </div>
-                        </div>
-
-                        <!-- Legend -->
-                        <div class="mt-4 pt-4 border-t border-slate-200">
-                            <p class="text-xs font-medium text-slate-700 mb-2">Skiftlegend:</p>
-                            <div id="shiftLegend" class="flex flex-wrap gap-2">
-                                <!-- Will be populated dynamically -->
-                            </div>
+                        <h2 class="text-lg font-bold text-slate-800 mb-4">🤖 AI-förslag för optimal täckning</h2>
+                        <div id="aiSuggestions" class="space-y-3">
+                            <!-- AI suggestions will be generated here -->
                         </div>
                     </div>
 
-                    <!-- Coverage Analysis -->
+                    <!-- Analysis -->
                     <div class="bg-white rounded-lg shadow-lg p-4">
-                        <h2 class="text-lg font-bold text-slate-800 mb-4">📈 Täckningsanalys</h2>
-                        <div class="space-y-3" id="coverageAnalysis">
-                            <!-- Will be populated by JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- Key Metrics Comparison -->
-                    <div class="bg-white rounded-lg shadow-lg p-4">
-                        <h2 class="text-lg font-bold text-slate-800 mb-4">📊 Nyckeltal Jämförelse</h2>
-
-                        <!-- Metrics Table -->
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead>
-                                    <tr class="border-b-2 border-slate-200">
-                                        <th class="text-left p-3 font-bold text-slate-700">Mönster</th>
-                                        <th class="text-center p-3 font-bold text-slate-700">Effektivitet</th>
-                                        <th class="text-center p-3 font-bold text-slate-700">Utnyttjande</th>
-                                        <th class="text-center p-3 font-bold text-slate-700">Täckning</th>
-                                        <th class="text-center p-3 font-bold text-slate-700">Total kostnad</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="metricsTable">
-                                    <!-- Will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!-- Chart -->
-                        <div class="mt-6">
-                            <h3 class="text-md font-bold text-slate-800 mb-3">Effektivitet Jämförelse</h3>
-                            <canvas id="efficiencyChart" height="80"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Compliance Check -->
-                    <div class="bg-white rounded-lg shadow-lg p-4">
-                        <h2 class="text-lg font-bold text-slate-800 mb-4">✅ Efterlevnadskontroll</h2>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-xs">
-                                <thead>
-                                    <tr class="border-b-2 border-slate-200">
-                                        <th class="text-left p-2 font-bold text-slate-700">Skift</th>
-                                        <th class="text-center p-2 font-bold text-slate-700">Veckotimmar</th>
-                                        <th class="text-center p-2 font-bold text-slate-700">Konsekutiva dagar</th>
-                                        <th class="text-center p-2 font-bold text-slate-700">EU-kompatibel</th>
-                                        <th class="text-center p-2 font-bold text-slate-700">Trötthetsnivå</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="complianceTable">
-                                    <!-- Will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-3 p-3 bg-blue-50 rounded text-xs text-blue-800">
-                            <strong>Svenska/EU-normer:</strong> Max 48 tim/vecka i snitt, 11 tim dygnsrast, max 5 konsekutiva dagar rekommenderas
+                        <h2 class="text-lg font-bold text-slate-800 mb-4">📊 Detaljerad analys</h2>
+                        <div id="detailedAnalysis">
+                            <!-- Analysis will be generated here -->
                         </div>
                     </div>
                 </div>
@@ -408,62 +308,31 @@
                     </div>
                 </div>
 
-                <!-- Rotation Pattern -->
-                <div class="border-t pt-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Rotationsmönster</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs text-slate-600 mb-1">Antal veckor i rotation</label>
-                            <input type="number" id="rotationWeeks" value="1" min="1" max="8"
-                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                                   onchange="updateRotationUI()">
-                            <p class="text-xs text-slate-500 mt-1">1 = Ingen rotation, 2+ = Roterande schema</p>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-600 mb-1">Antal team som roterar</label>
-                            <input type="number" id="numTeams" value="1" min="1" max="6"
-                                   class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm">
-                            <p class="text-xs text-slate-500 mt-1">Team A, B, C, etc. som roterar genom skiften</p>
-                        </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Antal veckor i rotation</label>
+                        <input type="number" id="rotationWeeks" value="1" min="1" max="8"
+                               class="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                               onchange="updateRotationUI()">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Antal team</label>
+                        <input type="number" id="numTeams" value="1" min="1" max="6"
+                               class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+                    </div>
+                </div>
 
-                    <!-- Week Patterns -->
-                    <div id="weekPatternsContainer" class="mt-3 space-y-2">
-                        <div class="week-pattern">
-                            <label class="block text-xs font-medium text-slate-700 mb-1">Vecka 1 - Arbetsdagar</label>
-                            <div class="flex gap-2 flex-wrap week-days" data-week="1">
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="1"> Mån
-                                </label>
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="2"> Tis
-                                </label>
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="3"> Ons
-                                </label>
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="4"> Tor
-                                </label>
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="5"> Fre
-                                </label>
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="6"> Lör
-                                </label>
-                                <label class="flex items-center gap-1 text-sm">
-                                    <input type="checkbox" class="shift-day" value="0"> Sön
-                                </label>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Week Patterns -->
+                <div id="weekPatternsContainer" class="space-y-2">
+                    <!-- Will be populated dynamically -->
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Antal FTE per team</label>
                     <input type="number" id="shiftFTE" value="5" min="0.5" max="50" step="0.5"
                            class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-                    <p class="text-xs text-slate-500 mt-1">Detta är FTE per team, inte totalt</p>
                 </div>
+
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Färg</label>
                     <select id="shiftColor" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
@@ -474,6 +343,7 @@
                         <option value="5">Grön</option>
                         <option value="6">Cyan</option>
                         <option value="7">Röd</option>
+                        <option value="8">Indigo</option>
                     </select>
                 </div>
             </div>
@@ -491,85 +361,302 @@
     <script>
         // State
         let shifts = [];
-        let draggedShiftId = null;
-        let dragSourceDay = null;
-        let efficiencyChart = null;
+        let currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+        let currentMonth = currentDate.getMonth();
 
-        const DAYS = ['Söndag', 'Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag'];
+        const DAYS_SHORT = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'];
+        const MONTHS = ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
+                        'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'];
 
-        // Initialize with example data
+        // Manufacturing rotation presets
+        const ROTATION_PRESETS = {
+            continental: {
+                name: 'Continental',
+                description: '4 team, 8-timmars skift med 2 morgon, 2 kväll, 2 natt, 2 ledigt',
+                shifts: [
+                    { name: 'Morgon (Continental)', start: '06:00', end: '14:00', weeks: 1, teams: 4, pattern: [[1,2]], fte: 1 },
+                    { name: 'Kväll (Continental)', start: '14:00', end: '22:00', weeks: 1, teams: 4, pattern: [[1,2]], fte: 1 },
+                    { name: 'Natt (Continental)', start: '22:00', end: '06:00', weeks: 1, teams: 4, pattern: [[1,2]], fte: 1 }
+                ]
+            },
+            dupont: {
+                name: 'DuPont',
+                description: '12-timmars skift med 4 dagar på, 3 ledigt, 3 på, 1 ledigt, 3 på, 3 ledigt, 4 på, 7 ledigt',
+                shifts: [
+                    { name: 'Dag (DuPont)', start: '06:00', end: '18:00', weeks: 4, teams: 4, pattern: [[1,2,3,4],[1,2,3],[1,2,3,4]], fte: 1 },
+                    { name: 'Natt (DuPont)', start: '18:00', end: '06:00', weeks: 4, teams: 4, pattern: [[1,2,3,4],[1,2,3],[1,2,3,4]], fte: 1 }
+                ]
+            },
+            pitman: {
+                name: 'Pitman 2-2-3',
+                description: '12-timmars skift: 2 dagar på, 2 ledigt, 3 på, 2 ledigt, 2 på, 3 ledigt',
+                shifts: [
+                    { name: 'Dag (Pitman)', start: '06:00', end: '18:00', weeks: 2, teams: 4, pattern: [[1,2,5,6,7],[1,2]], fte: 1 },
+                    { name: 'Natt (Pitman)', start: '18:00', end: '06:00', weeks: 2, teams: 4, pattern: [[3,4,7],[3,4,5,6,7]], fte: 1 }
+                ]
+            },
+            panama: {
+                name: 'Panama 2-2-3',
+                description: 'Variant av Pitman med 2 dag, 2 ledigt, 3 dag mönster',
+                shifts: [
+                    { name: 'Dag (Panama)', start: '07:00', end: '19:00', weeks: 2, teams: 4, pattern: [[1,2,5,6,7],[3,4]], fte: 1 },
+                    { name: 'Natt (Panama)', start: '19:00', end: '07:00', weeks: 2, teams: 4, pattern: [[3,4],[1,2,5,6,7]], fte: 1 }
+                ]
+            },
+            '24_7_8h': {
+                name: '24/7 Tre Skift',
+                description: 'Klassisk 3-skifts rotation: morgon, kväll, natt',
+                shifts: [
+                    { name: 'Morgon', start: '06:00', end: '14:00', weeks: 1, teams: 3, pattern: [[1,2,3,4,5]], fte: 2 },
+                    { name: 'Kväll', start: '14:00', end: '22:00', weeks: 1, teams: 3, pattern: [[1,2,3,4,5]], fte: 2 },
+                    { name: 'Natt', start: '22:00', end: '06:00', weeks: 1, teams: 3, pattern: [[0,1,2,3,4,5,6]], fte: 1.5 }
+                ]
+            },
+            '5_8': {
+                name: '5 dagar, 8 timmar',
+                description: 'Standard kontorsdagar måndag-fredag',
+                shifts: [
+                    { name: 'Dagskift', start: '08:00', end: '17:00', weeks: 1, teams: 1, pattern: [[1,2,3,4,5]], fte: 10 }
+                ]
+            },
+            '4_10': {
+                name: '4 dagar, 10 timmar',
+                description: 'Komprimerad arbetsvecka med 10-timmars dagar',
+                shifts: [
+                    { name: '4x10 Skift', start: '07:00', end: '17:00', weeks: 1, teams: 1, pattern: [[1,2,3,4]], fte: 10 }
+                ]
+            }
+        };
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Try to load from localStorage first
             if (!loadFromLocalStorage()) {
-                // If no saved data, load examples
                 loadExampleShifts();
             }
+            renderCalendar();
+            renderShiftsList();
+            calculate();
         });
 
         function loadExampleShifts() {
             shifts = [
                 {
                     id: 1,
-                    name: 'Morgonpass (06-14)',
+                    name: 'Morgonpass',
                     startTime: '06:00',
                     endTime: '14:00',
                     rotationWeeks: 1,
                     numTeams: 1,
-                    weekPatterns: [[1, 2, 3, 4, 5]], // Mon-Fri
-                    fte: 10,
+                    weekPatterns: [[1, 2, 3, 4, 5]],
+                    fte: 8,
                     color: 1
                 },
                 {
                     id: 2,
-                    name: 'Eftermiddagspass (14-22)',
+                    name: 'Kvällspass',
                     startTime: '14:00',
                     endTime: '22:00',
                     rotationWeeks: 1,
                     numTeams: 1,
-                    weekPatterns: [[1, 2, 3, 4, 5]], // Mon-Fri
-                    fte: 10,
-                    color: 2
-                },
-                {
-                    id: 3,
-                    name: 'Nattpass (22-06)',
-                    startTime: '22:00',
-                    endTime: '06:00',
-                    rotationWeeks: 1,
-                    numTeams: 1,
-                    weekPatterns: [[0, 1, 2, 3, 4, 5, 6]], // All week
+                    weekPatterns: [[1, 2, 3, 4, 5]],
                     fte: 8,
-                    color: 3
-                },
-                {
-                    id: 4,
-                    name: 'Helgpass',
-                    startTime: '06:00',
-                    endTime: '18:00',
-                    rotationWeeks: 1,
-                    numTeams: 1,
-                    weekPatterns: [[6, 0]], // Sat-Sun
-                    fte: 6,
-                    color: 4
+                    color: 2
                 }
             ];
+        }
 
-            renderShiftsList();
+        function applyRotationPreset() {
+            const preset = document.getElementById('rotationPreset').value;
+            if (!preset) return;
+
+            const pattern = ROTATION_PRESETS[preset];
+            if (!pattern) return;
+
+            if (confirm(`Tillämpa ${pattern.name}?\n\n${pattern.description}\n\nDetta kommer att ersätta alla nuvarande skift.`)) {
+                shifts = [];
+                let id = 1;
+
+                pattern.shifts.forEach(s => {
+                    shifts.push({
+                        id: id++,
+                        name: s.name,
+                        startTime: s.start,
+                        endTime: s.end,
+                        rotationWeeks: s.weeks,
+                        numTeams: s.teams,
+                        weekPatterns: s.pattern,
+                        fte: s.fte,
+                        color: (id % 8) || 1
+                    });
+                });
+
+                renderShiftsList();
+                renderCalendar();
+                calculate();
+                generateAISuggestions();
+            }
+        }
+
+        function previousMonth() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
             renderCalendar();
-            calculate();
+        }
+
+        function nextMonth() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            document.getElementById('currentMonth').textContent = `${MONTHS[currentMonth]} ${currentYear}`;
+
+            const container = document.getElementById('calendarDays');
+            container.innerHTML = '';
+
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const daysInMonth = lastDay.getDate();
+
+            // Get first Monday to start the calendar (ISO week starts on Monday)
+            let startDate = new Date(firstDay);
+            const dayOfWeek = (startDate.getDay() + 6) % 7; // Convert to ISO (0=Mon, 6=Sun)
+            startDate.setDate(startDate.getDate() - dayOfWeek);
+
+            // Render 6 weeks
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            for (let i = 0; i < 42; i++) {
+                const currentDay = new Date(startDate);
+                currentDay.setDate(startDate.getDate() + i);
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+
+                const isCurrentMonth = currentDay.getMonth() === currentMonth;
+                const isToday = currentDay.getTime() === today.getTime();
+
+                if (!isCurrentMonth) {
+                    dayDiv.classList.add('other-month');
+                }
+                if (isToday) {
+                    dayDiv.classList.add('today');
+                }
+
+                // Get shifts for this day
+                const dayOfWeekISO = (currentDay.getDay() + 6) % 7; // 0=Mon, 6=Sun
+                const shiftsForDay = getShiftsForDay(currentDay, dayOfWeekISO);
+
+                // Calculate coverage for this day
+                const coverage = calculateDayCoverage(currentDay, shiftsForDay);
+                const required = getRequiredCoverage(dayOfWeekISO);
+
+                let coverageClass = 'coverage-poor';
+                if (coverage >= required) coverageClass = 'coverage-good';
+                else if (coverage >= required * 0.8) coverageClass = 'coverage-partial';
+
+                // Day header with date and coverage indicator
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'day-header';
+                headerDiv.innerHTML = `
+                    <span>${currentDay.getDate()}</span>
+                    <span class="coverage-indicator ${coverageClass}" title="Täckning: ${coverage.toFixed(1)}/${required}h"></span>
+                `;
+                dayDiv.appendChild(headerDiv);
+
+                // Shift bars
+                shiftsForDay.forEach(shift => {
+                    const shiftBar = document.createElement('div');
+                    shiftBar.className = `shift-bar shift-color-${shift.color}`;
+                    shiftBar.textContent = `${shift.name} (${shift.startTime}-${shift.endTime})`;
+                    shiftBar.title = `${shift.name}\n${shift.startTime}-${shift.endTime}\n${shift.fte} FTE`;
+                    shiftBar.onclick = () => showEditShiftModal(shift.id);
+                    dayDiv.appendChild(shiftBar);
+                });
+
+                // Day summary
+                const totalFTE = shiftsForDay.reduce((sum, s) => sum + s.fte, 0);
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'day-summary';
+                summaryDiv.innerHTML = `
+                    <div><strong>${totalFTE.toFixed(1)} FTE</strong></div>
+                    <div>${coverage.toFixed(1)}h täckning</div>
+                `;
+                dayDiv.appendChild(summaryDiv);
+
+                container.appendChild(dayDiv);
+            }
+        }
+
+        function getShiftsForDay(date, dayOfWeek) {
+            const result = [];
+
+            shifts.forEach(shift => {
+                // Check each team
+                for (let team = 0; team < shift.numTeams; team++) {
+                    // Determine which week in the rotation we're in
+                    const weekIdx = team % shift.rotationWeeks;
+                    const pattern = shift.weekPatterns[weekIdx] || [];
+
+                    // Check if this day of week is in the pattern
+                    if (pattern.includes(dayOfWeek)) {
+                        result.push({
+                            ...shift,
+                            teamIdx: team
+                        });
+                    }
+                }
+            });
+
+            return result;
+        }
+
+        function calculateDayCoverage(date, shiftsForDay) {
+            let totalHours = 0;
+
+            shiftsForDay.forEach(shift => {
+                const start = timeToHours(shift.startTime);
+                const end = timeToHours(shift.endTime);
+                const hours = end > start ? (end - start) : (24 - start + end);
+                totalHours += hours;
+            });
+
+            return totalHours;
+        }
+
+        function getRequiredCoverage(dayOfWeek) {
+            // dayOfWeek: 0=Mon, 4=Fri, 5=Sat, 6=Sun
+            if (dayOfWeek >= 0 && dayOfWeek <= 4) {
+                return parseFloat(document.getElementById('coverageMF').value);
+            } else if (dayOfWeek === 5) {
+                return parseFloat(document.getElementById('coverageSat').value);
+            } else {
+                return parseFloat(document.getElementById('coverageSun').value);
+            }
+        }
+
+        function timeToHours(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours + minutes / 60;
         }
 
         function updateRotationUI() {
             const numWeeks = parseInt(document.getElementById('rotationWeeks').value);
             const container = document.getElementById('weekPatternsContainer');
-
-            // Clear existing patterns
             container.innerHTML = '';
 
-            // Create pattern for each week
             for (let week = 1; week <= numWeeks; week++) {
                 const div = document.createElement('div');
-                div.className = 'week-pattern mb-3 p-3 bg-slate-50 rounded';
+                div.className = 'p-3 bg-slate-50 rounded';
                 div.innerHTML = `
                     <label class="block text-xs font-medium text-slate-700 mb-2">Vecka ${week} - Arbetsdagar</label>
                     <div class="flex gap-2 flex-wrap week-days" data-week="${week}">
@@ -598,19 +685,6 @@
                 `;
                 container.appendChild(div);
             }
-        }
-
-        function toggleSection(section) {
-            const content = document.getElementById(`${section}-section`);
-            const toggle = document.getElementById(`${section}-toggle`);
-            content.classList.toggle('open');
-            toggle.textContent = content.classList.contains('open') ? '▼' : '▶';
-        }
-
-        function toggleAbsences() {
-            const checked = document.getElementById('includeAbsences').checked;
-            document.getElementById('absencesSection').style.display = checked ? 'block' : 'none';
-            calculate();
         }
 
         function showAddShiftModal() {
@@ -643,7 +717,6 @@
 
             updateRotationUI();
 
-            // Set checkboxes for each week
             setTimeout(() => {
                 shift.weekPatterns.forEach((pattern, weekIdx) => {
                     const weekContainer = document.querySelector(`.week-days[data-week="${weekIdx + 1}"]`);
@@ -672,7 +745,6 @@
             const numTeams = parseInt(document.getElementById('numTeams').value);
             const editId = document.getElementById('editShiftId').value;
 
-            // Collect week patterns
             const weekPatterns = [];
             document.querySelectorAll('.week-days').forEach(weekContainer => {
                 const days = Array.from(weekContainer.querySelectorAll('.shift-day:checked'))
@@ -686,7 +758,6 @@
             }
 
             if (editId) {
-                // Edit existing shift
                 const shift = shifts.find(s => s.id === parseInt(editId));
                 if (shift) {
                     shift.name = name;
@@ -699,8 +770,7 @@
                     shift.color = color;
                 }
             } else {
-                // Add new shift
-                const newShift = {
+                shifts.push({
                     id: Date.now(),
                     name,
                     startTime: start,
@@ -710,14 +780,14 @@
                     weekPatterns,
                     fte,
                     color
-                };
-                shifts.push(newShift);
+                });
             }
 
             hideShiftModal();
             renderShiftsList();
             renderCalendar();
             calculate();
+            generateAISuggestions();
         }
 
         function deleteShift(id) {
@@ -726,15 +796,7 @@
                 renderShiftsList();
                 renderCalendar();
                 calculate();
-            }
-        }
-
-        function clearAll() {
-            if (confirm('Är du säker på att du vill rensa alla skift och börja om från början?')) {
-                shifts = [];
-                renderShiftsList();
-                renderCalendar();
-                calculate();
+                generateAISuggestions();
             }
         }
 
@@ -744,10 +806,6 @@
 
             shifts.forEach(shift => {
                 const totalFTE = shift.fte * shift.numTeams;
-                const rotationDesc = shift.rotationWeeks > 1 ?
-                    `${shift.rotationWeeks} veckor, ${shift.numTeams} team` :
-                    `${shift.numTeams} team`;
-
                 const div = document.createElement('div');
                 div.className = 'p-2 bg-slate-50 rounded text-xs border border-slate-200 cursor-pointer hover:bg-slate-100';
                 div.onclick = () => showEditShiftModal(shift.id);
@@ -755,279 +813,193 @@
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
                             <div class="w-3 h-3 rounded shift-color-${shift.color}"></div>
-                            <span class="font-medium text-slate-800">${shift.name}</span>
+                            <span class="font-medium">${shift.name}</span>
                         </div>
                         <button onclick="event.stopPropagation(); deleteShift(${shift.id})" class="text-red-500 hover:text-red-700">✕</button>
                     </div>
-                    <div class="text-slate-600">
-                        ${shift.startTime} - ${shift.endTime} • ${totalFTE} FTE totalt
-                    </div>
-                    <div class="text-slate-500 text-xs">
-                        ${rotationDesc}
-                    </div>
+                    <div class="text-slate-600">${shift.startTime}-${shift.endTime} • ${totalFTE} FTE</div>
                 `;
                 container.appendChild(div);
-            });
-        }
-
-        function renderCalendar() {
-            const container = document.getElementById('calendarRows');
-            container.innerHTML = '';
-
-            // Render each day
-            for (let dayIdx = 1; dayIdx <= 7; dayIdx++) {
-                const day = dayIdx % 7; // 0=Sun, 1=Mon, etc.
-
-                // Day label
-                const dayLabel = document.createElement('div');
-                dayLabel.className = 'calendar-day-label';
-                dayLabel.textContent = DAYS[day];
-                container.appendChild(dayLabel);
-
-                // 24 hour columns
-                for (let hour = 0; hour < 24; hour++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'calendar-hour';
-                    cell.dataset.day = day;
-                    cell.dataset.hour = hour;
-
-                    container.appendChild(cell);
-                }
-            }
-
-            // Now render shift bars
-            renderShiftBars();
-            renderShiftLegend();
-        }
-
-        function renderShiftBars() {
-            shifts.forEach(shift => {
-                // For each team
-                for (let team = 0; team < shift.numTeams; team++) {
-                    // Get the pattern for this team based on rotation
-                    const weekIdx = team % shift.rotationWeeks;
-                    const pattern = shift.weekPatterns[weekIdx] || [];
-
-                    pattern.forEach(day => {
-                        const start = timeToHours(shift.startTime);
-                        const end = timeToHours(shift.endTime);
-
-                        // Handle overnight shifts
-                        if (end < start) {
-                            // Part 1: from start to midnight
-                            renderShiftBar(shift, day, start, 24, team);
-                            // Part 2: from midnight to end (next day)
-                            const nextDay = (day + 1) % 7;
-                            renderShiftBar(shift, nextDay, 0, end, team);
-                        } else {
-                            renderShiftBar(shift, day, start, end, team);
-                        }
-                    });
-                }
-            });
-        }
-
-        function renderShiftBar(shift, day, startHour, endHour, teamIdx) {
-            const startCol = Math.floor(startHour);
-            const endCol = Math.ceil(endHour);
-            const duration = endHour - startHour;
-
-            // Find the cell at the start position
-            const startCell = document.querySelector(`[data-day="${day}"][data-hour="${startCol}"]`);
-            if (!startCell) return;
-
-            const teamLetter = String.fromCharCode(65 + teamIdx); // A, B, C, etc.
-            const displayName = shift.numTeams > 1 ? `${shift.name} (${teamLetter})` : shift.name;
-
-            const bar = document.createElement('div');
-            bar.className = `shift-bar shift-color-${shift.color}`;
-            bar.dataset.shiftId = shift.id;
-            bar.dataset.day = day;
-            bar.textContent = displayName;
-            bar.title = `${displayName}\n${shift.startTime}-${shift.endTime}\n${shift.fte} FTE`;
-
-            // Calculate position and width
-            const leftOffset = (startHour - startCol) * 100;
-            const width = duration * 100;
-
-            bar.style.left = leftOffset + '%';
-            bar.style.width = width + '%';
-
-            // Add click to edit
-            bar.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showEditShiftModal(shift.id);
-            });
-
-            startCell.appendChild(bar);
-        }
-
-        function timeToHours(timeStr) {
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours + minutes / 60;
-        }
-
-        function renderShiftLegend() {
-            const legend = document.getElementById('shiftLegend');
-            legend.innerHTML = '';
-
-            shifts.forEach(shift => {
-                const totalFTE = shift.fte * shift.numTeams;
-                const item = document.createElement('div');
-                item.className = 'flex items-center gap-1 text-xs cursor-pointer hover:bg-slate-50 px-2 py-1 rounded';
-                item.onclick = () => showEditShiftModal(shift.id);
-                item.innerHTML = `
-                    <div class="w-4 h-4 rounded shift-color-${shift.color}"></div>
-                    <span>${shift.name} (${totalFTE} FTE)</span>
-                `;
-                legend.appendChild(item);
             });
         }
 
         function calculate() {
             const totalFTEBudget = parseFloat(document.getElementById('totalFTE').value);
             const fteCost = parseFloat(document.getElementById('fteCost').value);
-            const currency = document.getElementById('currency').value;
-            const includeAbsences = document.getElementById('includeAbsences').checked;
 
-            let absenceDays = 0;
-            if (includeAbsences) {
-                absenceDays = parseInt(document.getElementById('vacationDays').value) +
-                             parseInt(document.getElementById('holidays').value) +
-                             parseInt(document.getElementById('sickDays').value);
-            }
-
-            const workingDaysPerYear = 260;
-            const absenceRate = absenceDays / workingDaysPerYear;
-
-            // Calculate totals (accounting for teams)
             const totalFTEUsed = shifts.reduce((sum, shift) => sum + (shift.fte * shift.numTeams), 0);
             const totalAnnualCost = totalFTEUsed * fteCost;
-
-            // Calculate weekly coverage
-            const coverageMF = parseFloat(document.getElementById('coverageMF').value);
-            const coverageSat = parseFloat(document.getElementById('coverageSat').value);
-            const coverageSun = parseFloat(document.getElementById('coverageSun').value);
-            const weeklyTargetHours = (coverageMF * 5) + coverageSat + coverageSun;
-
-            // Calculate actual coverage
-            let actualWeeklyCoverage = 0;
-            shifts.forEach(shift => {
-                const shiftStart = timeToHours(shift.startTime);
-                const shiftEnd = timeToHours(shift.endTime);
-                let shiftHours = shiftEnd > shiftStart ? (shiftEnd - shiftStart) : (24 - shiftStart + shiftEnd);
-
-                // Average days across all rotation weeks
-                let avgDaysPerWeek = 0;
-                shift.weekPatterns.forEach(pattern => {
-                    avgDaysPerWeek += pattern.length;
-                });
-                avgDaysPerWeek = avgDaysPerWeek / shift.rotationWeeks;
-
-                const weeklyHours = shiftHours * avgDaysPerWeek * shift.fte * shift.numTeams;
-                actualWeeklyCoverage += weeklyHours * (1 - absenceRate);
-            });
-
             const utilization = totalFTEBudget > 0 ? (totalFTEUsed / totalFTEBudget * 100) : 0;
-            const coverageAchievement = weeklyTargetHours > 0 ? (actualWeeklyCoverage / weeklyTargetHours * 100) : 0;
 
-            // Update KPIs
             document.getElementById('kpiTotalFTE').textContent = totalFTEUsed.toFixed(1);
             document.getElementById('kpiBudget').textContent = totalFTEBudget;
             document.getElementById('kpiUtilization').textContent = utilization.toFixed(0) + '%';
-            document.getElementById('kpiCoverage').textContent = actualWeeklyCoverage.toFixed(0) + ' tim';
-            document.getElementById('kpiTarget').textContent = weeklyTargetHours.toFixed(0);
+            document.getElementById('kpiCost').textContent = (totalAnnualCost / 1000000).toFixed(1) + 'M kr';
 
-            const costDisplay = currency === 'SEK' ?
-                (totalAnnualCost / 1000000).toFixed(1) + 'M kr' :
-                currency === 'USD' ?
-                '$' + (totalAnnualCost / 1000000).toFixed(1) + 'M' :
-                '€' + (totalAnnualCost / 1000000).toFixed(1) + 'M';
-            document.getElementById('kpiCost').textContent = costDisplay;
-            document.getElementById('kpiCostPerHour').textContent = currency;
-
-            // Update analyses
-            renderCoverageAnalysis();
-            renderComplianceTable();
-            renderKeyMetrics();
+            generateAISuggestions();
+            generateDetailedAnalysis();
         }
 
-        function renderCoverageAnalysis() {
-            const container = document.getElementById('coverageAnalysis');
+        function generateAISuggestions() {
+            const container = document.getElementById('aiSuggestions');
             container.innerHTML = '';
 
-            DAYS.forEach((dayName, dayIndex) => {
-                // Find all shifts on this day (considering rotation patterns)
-                let totalFTEOnDay = 0;
-                let actualHours = 0;
+            // Analyze current setup
+            const coverageMF = parseFloat(document.getElementById('coverageMF').value);
+            const coverageSat = parseFloat(document.getElementById('coverageSat').value);
+            const coverageSun = parseFloat(document.getElementById('coverageSun').value);
+            const totalFTEBudget = parseFloat(document.getElementById('totalFTE').value);
+            const totalFTEUsed = shifts.reduce((sum, shift) => sum + (shift.fte * shift.numTeams), 0);
 
-                shifts.forEach(shift => {
-                    // Check if this day appears in any rotation week
-                    let isOnThisDay = false;
-                    shift.weekPatterns.forEach(pattern => {
-                        if (pattern.includes(dayIndex)) {
-                            isOnThisDay = true;
-                        }
-                    });
+            const suggestions = [];
 
-                    if (isOnThisDay) {
-                        totalFTEOnDay += shift.fte * shift.numTeams;
+            // Check if budget allows for improvements
+            const remainingFTE = totalFTEBudget - totalFTEUsed;
 
-                        const start = timeToHours(shift.startTime);
-                        const end = timeToHours(shift.endTime);
-                        const hours = end > start ? (end - start) : (24 - start + end);
-                        actualHours += hours * shift.numTeams;
-                    }
+            if (coverageMF === 24 && coverageSat > 0 && shifts.length < 3) {
+                suggestions.push({
+                    title: '24/7 Täckning - Tre Skift Rekommenderas',
+                    description: 'För 24-timmars täckning rekommenderas ett klassiskt tre-skifts system med morgon (06-14), kväll (14-22), och natt (22-06).',
+                    action: 'Använd "24/7 Tre Skift" från standardrotationer',
+                    impact: `Kräver ~${(coverageMF * 7 / 40).toFixed(1)} FTE totalt`,
+                    priority: 'high'
                 });
+            }
 
-                let targetHours = 0;
-                if (dayIndex >= 1 && dayIndex <= 5) {
-                    targetHours = parseFloat(document.getElementById('coverageMF').value);
-                } else if (dayIndex === 6) {
-                    targetHours = parseFloat(document.getElementById('coverageSat').value);
-                } else {
-                    targetHours = parseFloat(document.getElementById('coverageSun').value);
+            if (remainingFTE > 5) {
+                suggestions.push({
+                    title: 'Budget underutnyttjad',
+                    description: `Du har ${remainingFTE.toFixed(1)} FTE kvar i budget. Överväg att öka personalstyrkan för bättre täckning eller lägga till fler skift.`,
+                    action: 'Öka FTE per skift eller lägg till nya skift',
+                    impact: `Möjlighet att förbättra täckning med ${remainingFTE.toFixed(0)} personer`,
+                    priority: 'medium'
+                });
+            }
+
+            if (totalFTEUsed > totalFTEBudget) {
+                suggestions.push({
+                    title: '⚠️ Budgetöverskridning',
+                    description: `Ditt schema använder ${(totalFTEUsed - totalFTEBudget).toFixed(1)} FTE mer än budget tillåter.`,
+                    action: 'Minska antal team eller FTE per skift',
+                    impact: `Budgetöverskridning: ${((totalFTEUsed - totalFTEBudget) * parseFloat(document.getElementById('fteCost').value) / 1000000).toFixed(1)}M kr`,
+                    priority: 'high'
+                });
+            }
+
+            if (shifts.length > 0) {
+                const hasWeekendCoverage = shifts.some(s =>
+                    s.weekPatterns.some(p => p.includes(5) || p.includes(6) || p.includes(0))
+                );
+
+                if ((coverageSat > 0 || coverageSun > 0) && !hasWeekendCoverage) {
+                    suggestions.push({
+                        title: 'Helgtäckning saknas',
+                        description: 'Du har specificerat krav för helgtäckning men inga skift inkluderar lördag eller söndag.',
+                        action: 'Lägg till helgpass eller utöka befintliga skift till helgen',
+                        impact: 'Nödvändigt för att möta täckningskrav',
+                        priority: 'high'
+                    });
                 }
+            }
 
-                const coveragePercent = targetHours > 0 ? (actualHours / targetHours * 100) : 0;
-                const gap = targetHours - actualHours;
+            // Check for rotation efficiency
+            const rotatingShifts = shifts.filter(s => s.rotationWeeks > 1 || s.numTeams > 1);
+            if (rotatingShifts.length === 0 && coverageMF === 24) {
+                suggestions.push({
+                    title: 'Överväg roterande skift',
+                    description: 'För 24/7 drift är roterande skift ofta mer effektivt och ger bättre arbetsmiljö.',
+                    action: 'Använd DuPont, Pitman eller Continental från standardrotationer',
+                    impact: 'Bättre personalplanering och work-life balance',
+                    priority: 'medium'
+                });
+            }
 
-                const barColor = coveragePercent >= 100 ? 'bg-green-500' :
-                               coveragePercent >= 80 ? 'bg-blue-500' : 'bg-red-500';
-
-                const div = document.createElement('div');
-                div.innerHTML = `
-                    <div class="flex justify-between items-center mb-1 text-sm">
-                        <span class="font-medium text-slate-700">${dayName}</span>
-                        <span class="text-slate-600">
-                            ${actualHours.toFixed(1)}tim / ${targetHours}tim mål
-                            ${gap > 0 ? `<span class="text-red-600 font-medium">(-${gap.toFixed(1)}tim)</span>` : ''}
-                        </span>
-                    </div>
-                    <div class="h-6 bg-slate-100 rounded overflow-hidden">
-                        <div class="coverage-bar h-full ${barColor} flex items-center justify-center text-white text-xs font-bold"
-                             style="width: ${Math.min(coveragePercent, 100)}%">
-                            ${coveragePercent.toFixed(0)}%
+            // Render suggestions
+            if (suggestions.length === 0) {
+                container.innerHTML = '<p class="text-slate-600 text-sm">Ditt schema ser bra ut! Inga förslag för tillfället.</p>';
+            } else {
+                suggestions.forEach(s => {
+                    const priorityColor = s.priority === 'high' ? 'border-red-500' :
+                                         s.priority === 'medium' ? 'border-orange-500' : 'border-blue-500';
+                    const div = document.createElement('div');
+                    div.className = `suggestion-card ${priorityColor}`;
+                    div.innerHTML = `
+                        <h4 class="font-bold text-slate-800 mb-2">${s.title}</h4>
+                        <p class="text-sm text-slate-600 mb-2">${s.description}</p>
+                        <div class="bg-blue-50 p-2 rounded text-sm mb-2">
+                            <strong>Åtgärd:</strong> ${s.action}
                         </div>
-                    </div>
-                    <div class="text-xs text-slate-500 mt-1">
-                        ${totalFTEOnDay.toFixed(1)} FTE schemalagt
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+                        <div class="text-xs text-slate-500">
+                            <strong>Påverkan:</strong> ${s.impact}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
         }
 
-        function renderComplianceTable() {
-            const table = document.getElementById('complianceTable');
-            table.innerHTML = '';
+        function generateDetailedAnalysis() {
+            const container = document.getElementById('detailedAnalysis');
 
+            let html = '<div class="space-y-4">';
+
+            // Weekly coverage breakdown
+            html += '<div class="p-4 bg-slate-50 rounded">';
+            html += '<h3 class="font-bold text-slate-800 mb-3">Veckoöversikt - Täckning per dag</h3>';
+            html += '<div class="grid grid-cols-7 gap-2 text-xs">';
+
+            const DAYS_FULL = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
+            for (let day = 0; day < 7; day++) {
+                // Calculate average coverage for this day
+                let totalCoverage = 0;
+                let count = 0;
+
+                shifts.forEach(shift => {
+                    shift.weekPatterns.forEach(pattern => {
+                        if (pattern.includes(day === 6 ? 0 : day + 1)) {
+                            const start = timeToHours(shift.startTime);
+                            const end = timeToHours(shift.endTime);
+                            const hours = end > start ? (end - start) : (24 - start + end);
+                            totalCoverage += hours * shift.numTeams;
+                            count++;
+                        }
+                    });
+                });
+
+                const required = getRequiredCoverage(day);
+                const coverage = count > 0 ? totalCoverage : 0;
+                const percent = required > 0 ? (coverage / required * 100) : 0;
+                const status = percent >= 100 ? '✅' : percent >= 80 ? '⚠️' : '❌';
+
+                html += `
+                    <div class="p-2 bg-white rounded border border-slate-200">
+                        <div class="font-bold mb-1">${DAYS_FULL[day]}</div>
+                        <div>${coverage.toFixed(1)}h / ${required}h ${status}</div>
+                        <div class="text-xs text-slate-500">${percent.toFixed(0)}% täckt</div>
+                    </div>
+                `;
+            }
+
+            html += '</div></div>';
+
+            // Shift efficiency table
+            html += '<div class="p-4 bg-slate-50 rounded">';
+            html += '<h3 class="font-bold text-slate-800 mb-3">Skifteffektivitet</h3>';
+            html += '<table class="w-full text-sm">';
+            html += '<thead><tr class="border-b-2 border-slate-300">';
+            html += '<th class="text-left p-2">Skift</th>';
+            html += '<th class="text-center p-2">Total FTE</th>';
+            html += '<th class="text-center p-2">Timmar/vecka</th>';
+            html += '<th class="text-center p-2">Dagar/vecka</th>';
+            html += '<th class="text-center p-2">Kostnad/år</th>';
+            html += '</tr></thead><tbody>';
+
+            const fteCost = parseFloat(document.getElementById('fteCost').value);
             shifts.forEach(shift => {
                 const start = timeToHours(shift.startTime);
                 const end = timeToHours(shift.endTime);
                 const shiftHours = end > start ? (end - start) : (24 - start + end);
 
-                // Average days per week across rotation
                 let avgDaysPerWeek = 0;
                 shift.weekPatterns.forEach(pattern => {
                     avgDaysPerWeek += pattern.length;
@@ -1035,199 +1007,29 @@
                 avgDaysPerWeek = avgDaysPerWeek / shift.rotationWeeks;
 
                 const weeklyHours = shiftHours * avgDaysPerWeek;
-                const euCompliant = weeklyHours <= 48;
-                const fatigueRisk = shiftHours > 8 ? 'Medel' : 'Låg';
+                const totalFTE = shift.fte * shift.numTeams;
+                const annualCost = totalFTE * fteCost;
 
-                const row = document.createElement('tr');
-                row.className = 'border-b border-slate-100';
-                row.innerHTML = `
-                    <td class="p-2 text-slate-800">${shift.name}</td>
-                    <td class="text-center p-2">
-                        ${weeklyHours.toFixed(1)} tim
-                        ${weeklyHours > 48 ? '<span class="text-red-600">⚠️</span>' : '<span class="text-green-600">✓</span>'}
-                    </td>
-                    <td class="text-center p-2">
-                        ${avgDaysPerWeek.toFixed(1)} dagar
-                        ${avgDaysPerWeek > 5 ? '<span class="text-amber-600">⚠️</span>' : '<span class="text-green-600">✓</span>'}
-                    </td>
-                    <td class="text-center p-2">
-                        ${euCompliant ? '<span class="text-green-600 font-bold">✓</span>' : '<span class="text-red-600 font-bold">✗</span>'}
-                    </td>
-                    <td class="text-center p-2">
-                        <span class="px-2 py-1 rounded text-xs ${fatigueRisk === 'Låg' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
-                            ${fatigueRisk}
-                        </span>
-                    </td>
-                `;
-                table.appendChild(row);
-            });
-        }
-
-        function renderKeyMetrics() {
-            const table = document.getElementById('metricsTable');
-            const totalFTEBudget = parseFloat(document.getElementById('totalFTE').value);
-            const fteCost = parseFloat(document.getElementById('fteCost').value);
-            const currency = document.getElementById('currency').value;
-
-            // Current pattern
-            const totalFTEUsed = shifts.reduce((sum, shift) => sum + (shift.fte * shift.numTeams), 0);
-            const utilization = totalFTEBudget > 0 ? (totalFTEUsed / totalFTEBudget * 100) : 0;
-            const totalAnnualCost = totalFTEUsed * fteCost;
-
-            // Calculate coverage
-            const coverageMF = parseFloat(document.getElementById('coverageMF').value);
-            const coverageSat = parseFloat(document.getElementById('coverageSat').value);
-            const coverageSun = parseFloat(document.getElementById('coverageSun').value);
-            const weeklyTargetHours = (coverageMF * 5) + coverageSat + coverageSun;
-
-            let actualWeeklyCoverage = 0;
-            shifts.forEach(shift => {
-                const shiftStart = timeToHours(shift.startTime);
-                const shiftEnd = timeToHours(shift.endTime);
-                let shiftHours = shiftEnd > shiftStart ? (shiftEnd - shiftStart) : (24 - shiftStart + shiftEnd);
-
-                let avgDaysPerWeek = 0;
-                shift.weekPatterns.forEach(pattern => {
-                    avgDaysPerWeek += pattern.length;
-                });
-                avgDaysPerWeek = avgDaysPerWeek / shift.rotationWeeks;
-
-                const weeklyHours = shiftHours * avgDaysPerWeek * shift.fte * shift.numTeams;
-                actualWeeklyCoverage += weeklyHours;
+                html += '<tr class="border-b border-slate-200">';
+                html += `<td class="p-2"><div class="flex items-center gap-2"><div class="w-3 h-3 rounded shift-color-${shift.color}"></div>${shift.name}</div></td>`;
+                html += `<td class="text-center p-2">${totalFTE.toFixed(1)}</td>`;
+                html += `<td class="text-center p-2">${weeklyHours.toFixed(1)}h</td>`;
+                html += `<td class="text-center p-2">${avgDaysPerWeek.toFixed(1)}</td>`;
+                html += `<td class="text-center p-2">${(annualCost / 1000).toFixed(0)}k kr</td>`;
+                html += '</tr>';
             });
 
-            const coveragePercent = weeklyTargetHours > 0 ? (actualWeeklyCoverage / weeklyTargetHours * 100) : 0;
+            html += '</tbody></table></div>';
 
-            // Calculate efficiency score (weighted: 40% utilization, 30% coverage, 30% cost efficiency)
-            const costEfficiency = totalFTEBudget > 0 ? (1 - (totalFTEUsed - totalFTEBudget * 0.9) / (totalFTEBudget * 0.1)) * 100 : 0;
-            const efficiency = (utilization * 0.4 + Math.min(coveragePercent, 100) * 0.3 + Math.max(0, costEfficiency) * 0.3).toFixed(1);
-
-            // Comparison patterns
-            const patterns = [
-                {
-                    name: 'Nuvarande schema',
-                    efficiency: efficiency,
-                    utilization: utilization.toFixed(1),
-                    coverage: coveragePercent.toFixed(1),
-                    cost: totalAnnualCost,
-                    isBest: true
-                },
-                {
-                    name: '5-Dag/8-Tim (Mån-Fre)',
-                    efficiency: 90.0,
-                    utilization: 75.1,
-                    coverage: 133.9,
-                    cost: totalFTEBudget * fteCost * 0.75,
-                    isBest: false
-                },
-                {
-                    name: '4-Skift/12-Tim (Pitman 2-2-3)',
-                    efficiency: 88.6,
-                    utilization: 71.5,
-                    coverage: 140.6,
-                    cost: totalFTEBudget * fteCost * 0.72,
-                    isBest: false
-                },
-                {
-                    name: 'DuPont 12-Tim',
-                    efficiency: 88.6,
-                    utilization: 71.5,
-                    coverage: 140.6,
-                    cost: totalFTEBudget * fteCost * 0.72,
-                    isBest: false
-                }
-            ];
-
-            table.innerHTML = '';
-            patterns.forEach(pattern => {
-                const costDisplay = currency === 'SEK' ?
-                    (pattern.cost / 1000).toFixed(0) + 'k kr' :
-                    currency === 'USD' ?
-                    '$' + (pattern.cost / 1000).toFixed(0) + 'k' :
-                    '€' + (pattern.cost / 1000).toFixed(0) + 'k';
-
-                const row = document.createElement('tr');
-                row.className = 'border-b border-slate-100';
-                row.innerHTML = `
-                    <td class="p-3 text-slate-800">
-                        ${pattern.name}
-                        ${pattern.isBest ? '<span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded font-bold">NUVARANDE</span>' : ''}
-                    </td>
-                    <td class="text-center p-3 font-bold text-slate-800">${pattern.efficiency}</td>
-                    <td class="text-center p-3 text-blue-600 font-medium">${pattern.utilization}%</td>
-                    <td class="text-center p-3 text-green-600 font-medium">${pattern.coverage}%</td>
-                    <td class="text-center p-3 text-slate-800">${costDisplay}</td>
-                `;
-                table.appendChild(row);
-            });
-
-            // Render chart
-            renderEfficiencyChart(patterns);
-        }
-
-        function renderEfficiencyChart(patterns) {
-            const ctx = document.getElementById('efficiencyChart');
-
-            if (efficiencyChart) {
-                efficiencyChart.destroy();
-            }
-
-            efficiencyChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: patterns.map(p => p.name),
-                    datasets: [{
-                        label: 'Effektivitet',
-                        data: patterns.map(p => parseFloat(p.efficiency)),
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.75)',
-                            'rgba(139, 92, 246, 0.75)',
-                            'rgba(16, 185, 129, 0.75)',
-                            'rgba(245, 158, 11, 0.75)'
-                        ],
-                        borderColor: [
-                            'rgba(59, 130, 246, 1)',
-                            'rgba(139, 92, 246, 1)',
-                            'rgba(16, 185, 129, 1)',
-                            'rgba(245, 158, 11, 1)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         function saveToLocalStorage() {
             const data = {
-                shifts: shifts,
-                processName: document.getElementById('processName').value,
+                shifts,
                 totalFTE: document.getElementById('totalFTE').value,
-                currency: document.getElementById('currency').value,
                 fteCost: document.getElementById('fteCost').value,
-                includeAbsences: document.getElementById('includeAbsences').checked,
-                vacationDays: document.getElementById('vacationDays').value,
-                holidays: document.getElementById('holidays').value,
-                sickDays: document.getElementById('sickDays').value,
                 coverageMF: document.getElementById('coverageMF').value,
                 coverageSat: document.getElementById('coverageSat').value,
                 coverageSun: document.getElementById('coverageSun').value
@@ -1239,32 +1041,20 @@
 
         function loadFromLocalStorage() {
             const saved = localStorage.getItem('shiftScheduleData');
-            if (!saved) {
-                return false;
-            }
+            if (!saved) return false;
 
             try {
                 const data = JSON.parse(saved);
-
                 shifts = data.shifts || [];
-                document.getElementById('processName').value = data.processName || 'Produktionslinje A';
                 document.getElementById('totalFTE').value = data.totalFTE || 44;
-                document.getElementById('currency').value = data.currency || 'SEK';
                 document.getElementById('fteCost').value = data.fteCost || 650000;
-                document.getElementById('includeAbsences').checked = data.includeAbsences !== false;
-                document.getElementById('vacationDays').value = data.vacationDays || 25;
-                document.getElementById('holidays').value = data.holidays || 13;
-                document.getElementById('sickDays').value = data.sickDays || 7;
                 document.getElementById('coverageMF').value = data.coverageMF || 24;
                 document.getElementById('coverageSat').value = data.coverageSat || 12;
                 document.getElementById('coverageSun').value = data.coverageSun || 0;
 
-                toggleAbsences();
                 renderShiftsList();
                 renderCalendar();
                 calculate();
-
-                alert('Schema laddades från lokal lagring!');
                 return true;
             } catch (e) {
                 console.error('Error loading data:', e);
@@ -1274,11 +1064,9 @@
 
         function exportSchedule() {
             let csv = 'Skiftschema Export\n\n';
-            csv += 'Processnamn,' + document.getElementById('processName').value + '\n';
-            csv += 'Total FTE Budget,' + document.getElementById('totalFTE').value + '\n';
-            csv += 'Valuta,' + document.getElementById('currency').value + '\n\n';
-
+            csv += 'Total FTE Budget,' + document.getElementById('totalFTE').value + '\n\n';
             csv += 'Skiftnamn,Starttid,Sluttid,Rotationsveckor,Antal team,FTE per team,Total FTE\n';
+
             shifts.forEach(shift => {
                 const totalFTE = shift.fte * shift.numTeams;
                 csv += `${shift.name},${shift.startTime},${shift.endTime},${shift.rotationWeeks},${shift.numTeams},${shift.fte},${totalFTE}\n`;
