@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Skiftschema Analysator</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-size: 14px;
@@ -459,7 +460,15 @@
             <!-- Header -->
             <div class="bg-gray-50 rounded shadow-sm p-3 mb-3 border border-gray-300">
                 <div class="flex items-center justify-between flex-wrap gap-3">
-                    <h1 class="text-xl font-bold text-gray-900">Skiftschema Analysator</h1>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-xl font-bold text-gray-900">Skiftschema Analysator</h1>
+                        <select id="yearSelector" onchange="changeYear()" class="px-3 py-2 border rounded bg-white text-gray-900 font-medium">
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
                     <div class="flex gap-2 flex-wrap">
                         <button onclick="previousMonth()" class="px-4 py-2 btn-secondary rounded" aria-label="Föregående månad">←</button>
                         <button onclick="nextMonth()" class="px-4 py-2 btn-secondary rounded" aria-label="Nästa månad">→</button>
@@ -514,6 +523,29 @@
                         </div>
                     </div>
 
+                    <!-- Working Hours Summary -->
+                    <div class="compact-card">
+                        <button onclick="toggleSection('workingSummary')" class="w-full flex items-center justify-between text-left">
+                            <h3>Arbetstid Sammanfattning</h3>
+                            <span id="workingSummary-toggle" class="text-lg">▼</span>
+                        </button>
+                        <div id="workingSummary-section" class="collapsible-section expanded space-y-3 mt-3">
+                            <div class="flex justify-between items-baseline">
+                                <span class="text-gray-600 text-sm">Denna Vecka:</span>
+                                <span class="text-gray-900 font-bold text-lg" id="weekHours">0</span>
+                            </div>
+                            <div class="flex justify-between items-baseline">
+                                <span class="text-gray-600 text-sm">Denna Månad:</span>
+                                <span class="text-gray-900 font-bold text-lg" id="monthHours">0</span>
+                            </div>
+                            <div class="flex justify-between items-baseline">
+                                <span class="text-gray-600 text-sm">År <span id="yearDisplay">2026</span>:</span>
+                                <span class="text-gray-900 font-bold text-lg" id="yearHours">0</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Timmar räknas per skift × FTE</p>
+                        </div>
+                    </div>
+
                     <!-- Settings -->
                     <div class="compact-card">
                         <button onclick="toggleSection('settings')" class="w-full flex items-center justify-between text-left">
@@ -535,6 +567,15 @@
                                        class="w-full px-3 py-2 border rounded">
                                 <div class="help-text">Snitt: 650k SEK</div>
                                 <div id="fteCost-error" class="error-message hidden"></div>
+                            </div>
+                            <div>
+                                <label class="block mb-2">
+                                    Timmar per arbetsdag
+                                </label>
+                                <input type="number" id="hoursPerDay" value="8" min="1" max="24" step="0.5" onchange="validateAndCalculate()"
+                                       class="w-full px-3 py-2 border rounded">
+                                <div class="help-text">Standard: 8h/dag</div>
+                                <div id="hoursPerDay-error" class="error-message hidden"></div>
                             </div>
                         </div>
                     </div>
@@ -585,6 +626,14 @@
                             <span id="shifts-toggle" class="text-lg">▼</span>
                         </button>
                         <div id="shifts-section" class="collapsible-section expanded mt-3">
+                            <div class="mb-3">
+                                <select id="shiftFilter" onchange="renderShiftsList()" class="w-full px-2 py-2 border rounded bg-white text-sm">
+                                    <option value="all">Alla skift</option>
+                                    <option value="dag">Dag (06:00-18:00)</option>
+                                    <option value="kvall">Kväll (14:00-23:00)</option>
+                                    <option value="natt">Natt (22:00-08:00)</option>
+                                </select>
+                            </div>
                             <div class="space-y-2 mb-3 text-sm" id="shiftsList"></div>
                             <button onclick="showWizard()" class="w-full px-3 py-2 btn-primary rounded">
                                 Lägg till skift
@@ -602,7 +651,23 @@
                 <!-- Calendar -->
                 <div class="xl:col-span-5">
                     <div class="bg-gray-50 rounded shadow-sm p-3 mb-3 border border-gray-300">
-                        <h2 class="text-lg font-bold text-center text-gray-900" id="currentMonth"></h2>
+                        <div class="flex items-center justify-center gap-3">
+                            <h2 class="text-lg font-bold text-gray-900" id="currentMonth"></h2>
+                            <select id="monthSelector" onchange="changeMonth()" class="px-3 py-2 border rounded bg-white text-sm">
+                                <option value="0">Januari</option>
+                                <option value="1">Februari</option>
+                                <option value="2">Mars</option>
+                                <option value="3">April</option>
+                                <option value="4">Maj</option>
+                                <option value="5">Juni</option>
+                                <option value="6">Juli</option>
+                                <option value="7">Augusti</option>
+                                <option value="8">September</option>
+                                <option value="9">Oktober</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="bg-gray-50 rounded shadow-sm p-2 border border-gray-300">
@@ -635,6 +700,78 @@
                             </button>
                             <div id="cost-section" class="collapsible-section expanded">
                                 <div id="costAnalysis" class="text-sm mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yearly Overview -->
+                    <div class="mt-3 compact-card">
+                        <button onclick="toggleSection('yearly')" class="w-full flex items-center justify-between text-left">
+                            <h3>Årlig Översikt <span id="yearlyOverviewYear">2026</span></h3>
+                            <span id="yearly-toggle" class="text-lg">▼</span>
+                        </button>
+                        <div id="yearly-section" class="collapsible-section expanded mt-3">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-gray-800 text-white">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left">Månad</th>
+                                            <th class="px-3 py-2 text-right">Arbetsdagar</th>
+                                            <th class="px-3 py-2 text-right">Timmar</th>
+                                            <th class="px-3 py-2 text-right">FTE</th>
+                                            <th class="px-3 py-2 text-right">Kostnad</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="yearlyTableBody" class="text-gray-900">
+                                        <!-- Generated rows -->
+                                    </tbody>
+                                    <tfoot class="bg-gray-200 font-bold text-gray-900">
+                                        <tr>
+                                            <td class="px-3 py-2">TOTALT</td>
+                                            <td class="px-3 py-2 text-right" id="totalWorkDays">0</td>
+                                            <td class="px-3 py-2 text-right" id="totalYearHours">0</td>
+                                            <td class="px-3 py-2 text-right" id="totalYearFTE">0</td>
+                                            <td class="px-3 py-2 text-right" id="totalYearCost">0M</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="mt-3 text-xs text-gray-600 space-y-1">
+                                <p><strong>Svenska helgdagar 2026:</strong></p>
+                                <p>Nyår (1 jan), Påsk (3-6 apr), Första Maj (1 maj), Kristi Himmelfärd (14 maj), Nationaldagen (6 jun), Midsommar (19-20 jun), Alla Helgons Dag (31 okt), Jul (24-26 dec), Nyårsafton (31 dec)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statistics & Analysis -->
+                    <div class="mt-3 compact-card">
+                        <button onclick="toggleSection('statistics')" class="w-full flex items-center justify-between text-left">
+                            <h3>Statistik & Analys</h3>
+                            <span id="statistics-toggle" class="text-lg">▼</span>
+                        </button>
+                        <div id="statistics-section" class="collapsible-section expanded mt-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium">Välj mått</label>
+                                    <select id="statsMetric" onchange="updateChart()" class="w-full px-3 py-2 border rounded bg-white">
+                                        <option value="arbetstid">Arbetstid (timmar)</option>
+                                        <option value="fte">FTE</option>
+                                        <option value="kostnad">Kostnad (MSEK)</option>
+                                        <option value="tackning">Täckning (%)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block mb-2 text-sm font-medium">Tidsperiod</label>
+                                    <select id="statsPeriod" onchange="updateChart()" class="w-full px-3 py-2 border rounded bg-white">
+                                        <option value="vecka">Vecka (7 dagar)</option>
+                                        <option value="manad" selected>Månad (12 månader)</option>
+                                        <option value="kvartal">Kvartal (4 kvartal)</option>
+                                        <option value="ar">År (jämförelse)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded border border-gray-300">
+                                <canvas id="statsChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -705,16 +842,33 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block mb-2">Start (HH:MM)</label>
-                        <input type="time" id="wizardShiftStart" value="06:00"
+                        <input type="time" id="wizardShiftStart" value="06:00" onchange="updateShiftHours()"
                                class="w-full px-3 py-2 border rounded">
                     </div>
                     <div>
                         <label class="block mb-2">Slut (HH:MM)</label>
-                        <input type="time" id="wizardShiftEnd" value="14:00"
+                        <input type="time" id="wizardShiftEnd" value="14:00" onchange="updateShiftHours()"
                                class="w-full px-3 py-2 border rounded">
                     </div>
                 </div>
-                <p class="help-text">Format: 24-timmars (06:00, 14:00, 22:00)</p>
+                <div class="p-3 bg-gray-100 rounded border border-gray-300">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-900">Beräknade timmar:</span>
+                        <span class="text-lg font-bold text-gray-900" id="calculatedHours">8.0</span>
+                    </div>
+                    <div>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="overrideHours" onchange="toggleHoursOverride()" class="w-5 h-5">
+                            <span class="text-sm">Anpassa timmar manuellt</span>
+                        </label>
+                    </div>
+                    <div id="manualHoursInput" class="hidden mt-2">
+                        <label class="block mb-2 text-sm">Timmar per skift</label>
+                        <input type="number" id="manualHours" value="8" min="0.5" max="24" step="0.5"
+                               class="w-full px-3 py-2 border rounded">
+                    </div>
+                </div>
+                <p class="help-text">Format: 24-timmars (06:00, 14:00, 22:00). Midnattsövergång hanteras automatiskt.</p>
             </div>
 
             <!-- Step 3: Staffing -->
@@ -776,14 +930,36 @@
     <script>
         let shifts = [];
         let currentDate = new Date();
-        let currentYear = currentDate.getFullYear();
+        let currentYear = 2026; // Default to 2026
         let currentMonth = currentDate.getMonth();
         let wizardStep = 1;
         let wizardTemplate = null;
         let editingShiftId = null;
+        let statsChart = null;
+        let shiftHoursOverride = {}; // Store custom hours per shift
 
         const MONTHS = ['Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
                         'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'];
+
+        // Swedish holidays 2026
+        const SWEDISH_HOLIDAYS_2026 = [
+            { date: '2026-01-01', name: 'Nyårsdagen' },
+            { date: '2026-01-06', name: 'Trettondedag jul' },
+            { date: '2026-04-03', name: 'Långfredagen' },
+            { date: '2026-04-05', name: 'Påskdagen' },
+            { date: '2026-04-06', name: 'Annandag påsk' },
+            { date: '2026-05-01', name: 'Första maj' },
+            { date: '2026-05-14', name: 'Kristi himmelsfärd' },
+            { date: '2026-05-24', name: 'Pingstdagen' },
+            { date: '2026-06-06', name: 'Sveriges nationaldag' },
+            { date: '2026-06-19', name: 'Midsommarafton' },
+            { date: '2026-06-20', name: 'Midsommardagen' },
+            { date: '2026-10-31', name: 'Alla helgons dag' },
+            { date: '2026-12-24', name: 'Julafton' },
+            { date: '2026-12-25', name: 'Juldagen' },
+            { date: '2026-12-26', name: 'Annandag jul' },
+            { date: '2026-12-31', name: 'Nyårsafton' }
+        ];
 
         const ROTATION_PRESETS = {
             continental: {
@@ -870,9 +1046,14 @@
                 loadExampleShifts();
             }
             renderPatternCards();
+            updateYearSelector();
+            updateMonthSelector();
             renderCalendar();
             renderShiftsList();
             calculate();
+            initChart();
+            generateYearlyOverview();
+            updateWorkingHoursSummary();
         });
 
         function dismissQuickStart() {
@@ -1231,15 +1412,26 @@
                 return;
             }
 
+            let shiftId;
             if (editingShiftId) {
+                shiftId = editingShiftId;
                 const shift = shifts.find(s => s.id === editingShiftId);
                 if (shift) {
                     Object.assign(shift, { name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
                 }
                 showToast('Skift uppdaterat', 'success');
             } else {
-                shifts.push({ id: Date.now(), name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
+                shiftId = Date.now();
+                shifts.push({ id: shiftId, name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
                 showToast('Skift skapat', 'success');
+            }
+
+            // Save manual hours override if set
+            if (document.getElementById('overrideHours').checked) {
+                const manualHours = parseFloat(document.getElementById('manualHours').value);
+                shiftHoursOverride[shiftId] = manualHours;
+            } else {
+                delete shiftHoursOverride[shiftId];
             }
 
             hideWizard();
@@ -1395,8 +1587,20 @@
 
         function renderShiftsList() {
             const container = document.getElementById('shiftsList');
+            const filter = document.getElementById('shiftFilter').value;
             container.innerHTML = '';
-            shifts.forEach(shift => {
+
+            const filteredShifts = shifts.filter(shift => {
+                if (filter === 'all') return true;
+                const startHour = parseInt(shift.startTime.split(':')[0]);
+                if (filter === 'dag') return startHour >= 6 && startHour < 14;
+                if (filter === 'kvall') return startHour >= 14 && startHour < 22;
+                if (filter === 'natt') return startHour >= 22 || startHour < 6;
+                return true;
+            });
+
+            filteredShifts.forEach(shift => {
+                const shiftHours = getShiftDuration(shift.startTime, shift.endTime, shift.id);
                 const div = document.createElement('div');
                 div.className = 'p-2 bg-gray-50 rounded border border-gray-300 cursor-pointer hover:bg-gray-100';
                 div.onclick = () => showWizard(shift.id);
@@ -1416,10 +1620,22 @@
                         </div>
                         <button onclick="event.stopPropagation(); deleteShift(${shift.id})" class="text-gray-600 hover:text-gray-900 font-bold text-lg">×</button>
                     </div>
-                    <div class="text-gray-600 text-sm mt-1">${shift.startTime}-${shift.endTime}</div>
+                    <div class="text-gray-600 text-sm mt-1">${shift.startTime}-${shift.endTime} <span class="font-semibold">(${shiftHours.toFixed(1)}h)</span></div>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        // Get shift duration handling midnight crossing
+        function getShiftDuration(startTime, endTime, shiftId) {
+            // Check if manual override exists
+            if (shiftId && shiftHoursOverride[shiftId]) {
+                return shiftHoursOverride[shiftId];
+            }
+
+            const start = timeToHours(startTime);
+            const end = timeToHours(endTime);
+            return end > start ? (end - start) : (24 - start + end);
         }
 
         function calculate() {
@@ -1437,6 +1653,9 @@
             generateQuickTips();
             generateWeeklyAnalysis();
             generateCostAnalysis();
+            updateWorkingHoursSummary();
+            generateYearlyOverview();
+            updateChart();
         }
 
         function generateQuickTips() {
@@ -1496,11 +1715,15 @@
         function saveToLocalStorage() {
             const data = {
                 shifts,
+                shiftHoursOverride,
                 totalFTE: document.getElementById('totalFTE').value,
                 fteCost: document.getElementById('fteCost').value,
+                hoursPerDay: document.getElementById('hoursPerDay').value,
                 coverageMF: document.getElementById('coverageMF').value,
                 coverageSat: document.getElementById('coverageSat').value,
-                coverageSun: document.getElementById('coverageSun').value
+                coverageSun: document.getElementById('coverageSun').value,
+                currentYear,
+                currentMonth
             };
             localStorage.setItem('shiftScheduleData', JSON.stringify(data));
             showToast('Schema sparat', 'success');
@@ -1512,11 +1735,21 @@
             try {
                 const data = JSON.parse(saved);
                 shifts = data.shifts || [];
+                shiftHoursOverride = data.shiftHoursOverride || {};
                 document.getElementById('totalFTE').value = data.totalFTE || 44;
                 document.getElementById('fteCost').value = data.fteCost || 650000;
+                document.getElementById('hoursPerDay').value = data.hoursPerDay || 8;
                 document.getElementById('coverageMF').value = data.coverageMF || 24;
                 document.getElementById('coverageSat').value = data.coverageSat || 12;
                 document.getElementById('coverageSun').value = data.coverageSun || 0;
+
+                if (data.currentYear) {
+                    currentYear = data.currentYear;
+                    currentMonth = data.currentMonth || 0;
+                }
+
+                updateYearSelector();
+                updateMonthSelector();
                 renderShiftsList();
                 renderCalendar();
                 calculate();
@@ -1540,6 +1773,368 @@
             a.download = 'skiftschema.csv';
             a.click();
             showToast('Schema exporterat', 'success');
+        }
+
+        // NEW FUNCTIONS FOR ENHANCEMENTS
+
+        // Year selector change
+        function changeYear() {
+            currentYear = parseInt(document.getElementById('yearSelector').value);
+            document.getElementById('yearDisplay').textContent = currentYear;
+            document.getElementById('yearlyOverviewYear').textContent = currentYear;
+            renderCalendar();
+            updateWorkingHoursSummary();
+            generateYearlyOverview();
+            updateChart();
+        }
+
+        // Month selector change
+        function changeMonth() {
+            currentMonth = parseInt(document.getElementById('monthSelector').value);
+            renderCalendar();
+            updateWorkingHoursSummary();
+        }
+
+        // Update year selector
+        function updateYearSelector() {
+            document.getElementById('yearSelector').value = currentYear;
+            document.getElementById('yearDisplay').textContent = currentYear;
+            document.getElementById('yearlyOverviewYear').textContent = currentYear;
+        }
+
+        // Update month selector
+        function updateMonthSelector() {
+            document.getElementById('monthSelector').value = currentMonth;
+        }
+
+        // Update shift hours in wizard
+        function updateShiftHours() {
+            const startTime = document.getElementById('wizardShiftStart').value;
+            const endTime = document.getElementById('wizardShiftEnd').value;
+            const hours = getShiftDuration(startTime, endTime);
+            document.getElementById('calculatedHours').textContent = hours.toFixed(1);
+            document.getElementById('manualHours').value = hours.toFixed(1);
+        }
+
+        // Toggle manual hours override
+        function toggleHoursOverride() {
+            const checked = document.getElementById('overrideHours').checked;
+            document.getElementById('manualHoursInput').classList.toggle('hidden', !checked);
+        }
+
+        // Working hours summary
+        function updateWorkingHoursSummary() {
+            const now = new Date(currentYear, currentMonth, 1);
+
+            // Calculate weekly hours (current week)
+            let weekHours = 0;
+            for (let d = 0; d < 7; d++) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - date.getDay() + d + 1); // Start from Monday
+                const dayOfWeek = date.getDay();
+                const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+                shiftsForDay.forEach(s => {
+                    const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                    weekHours += hours * s.fte;
+                });
+            }
+
+            // Calculate monthly hours
+            let monthHours = 0;
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                const dayOfWeek = date.getDay();
+                const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+                shiftsForDay.forEach(s => {
+                    const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                    monthHours += hours * s.fte;
+                });
+            }
+
+            // Calculate yearly hours
+            let yearHours = 0;
+            for (let month = 0; month < 12; month++) {
+                const daysInM = new Date(currentYear, month + 1, 0).getDate();
+                for (let day = 1; day <= daysInM; day++) {
+                    const date = new Date(currentYear, month, day);
+                    const dayOfWeek = date.getDay();
+                    const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+                    shiftsForDay.forEach(s => {
+                        const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                        yearHours += hours * s.fte;
+                    });
+                }
+            }
+
+            document.getElementById('weekHours').textContent = weekHours.toFixed(0) + 'h';
+            document.getElementById('monthHours').textContent = monthHours.toFixed(0) + 'h';
+            document.getElementById('yearHours').textContent = yearHours.toFixed(0) + 'h';
+        }
+
+        // Generate yearly overview table
+        function generateYearlyOverview() {
+            const tbody = document.getElementById('yearlyTableBody');
+            tbody.innerHTML = '';
+
+            let totalDays = 0;
+            let totalHours = 0;
+            let totalFTE = 0;
+
+            for (let month = 0; month < 12; month++) {
+                const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+                let monthHours = 0;
+                let monthFTE = 0;
+                let workDays = 0;
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(currentYear, month, day);
+                    const dayOfWeek = date.getDay();
+
+                    // Count work days (Mon-Fri)
+                    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                        workDays++;
+                    }
+
+                    const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+                    shiftsForDay.forEach(s => {
+                        const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                        monthHours += hours * s.fte;
+                        monthFTE += s.fte;
+                    });
+                }
+
+                monthFTE = monthFTE / daysInMonth; // Average FTE per day
+
+                const fteCost = parseFloat(document.getElementById('fteCost').value);
+                const monthCost = (monthFTE * fteCost / 12 / 1000000).toFixed(2);
+
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-300';
+                tr.innerHTML = `
+                    <td class="px-3 py-2">${MONTHS[month]}</td>
+                    <td class="px-3 py-2 text-right">${workDays}</td>
+                    <td class="px-3 py-2 text-right">${monthHours.toFixed(0)}</td>
+                    <td class="px-3 py-2 text-right">${monthFTE.toFixed(1)}</td>
+                    <td class="px-3 py-2 text-right">${monthCost}M</td>
+                `;
+                tbody.appendChild(tr);
+
+                totalDays += workDays;
+                totalHours += monthHours;
+                totalFTE += monthFTE;
+            }
+
+            const fteCost = parseFloat(document.getElementById('fteCost').value);
+            const yearFTE = totalFTE / 12;
+            const yearCost = (yearFTE * fteCost / 1000000).toFixed(1);
+
+            document.getElementById('totalWorkDays').textContent = totalDays;
+            document.getElementById('totalYearHours').textContent = totalHours.toFixed(0);
+            document.getElementById('totalYearFTE').textContent = yearFTE.toFixed(1);
+            document.getElementById('totalYearCost').textContent = yearCost + 'M';
+        }
+
+        // Initialize Chart.js
+        function initChart() {
+            const ctx = document.getElementById('statsChart').getContext('2d');
+            statsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Värde',
+                        data: [],
+                        backgroundColor: '#4b5563',
+                        borderColor: '#1f2937',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Statistik',
+                            color: '#1f2937',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#4b5563'
+                            },
+                            grid: {
+                                color: '#d1d5db'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#4b5563'
+                            },
+                            grid: {
+                                color: '#d1d5db'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update chart with current data
+        function updateChart() {
+            if (!statsChart) return;
+
+            const metric = document.getElementById('statsMetric').value;
+            const period = document.getElementById('statsPeriod').value;
+
+            let labels = [];
+            let data = [];
+
+            if (period === 'manad') {
+                // 12 months
+                labels = MONTHS;
+                data = Array(12).fill(0);
+
+                for (let month = 0; month < 12; month++) {
+                    const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+                    let value = 0;
+
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const date = new Date(currentYear, month, day);
+                        const dayOfWeek = date.getDay();
+                        const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+
+                        shiftsForDay.forEach(s => {
+                            const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                            if (metric === 'arbetstid') {
+                                value += hours * s.fte;
+                            } else if (metric === 'fte') {
+                                value += s.fte;
+                            } else if (metric === 'kostnad') {
+                                const fteCost = parseFloat(document.getElementById('fteCost').value);
+                                value += s.fte * fteCost / 12 / 1000000;
+                            } else if (metric === 'tackning') {
+                                const required = getRequiredCoverage(dayOfWeek);
+                                value += required > 0 ? (hours / required) * 100 : 0;
+                            }
+                        });
+                    }
+
+                    if (metric === 'tackning') {
+                        value = value / daysInMonth; // Average
+                    }
+                    data[month] = parseFloat(value.toFixed(2));
+                }
+            } else if (period === 'kvartal') {
+                // 4 quarters
+                labels = ['Q1', 'Q2', 'Q3', 'Q4'];
+                data = Array(4).fill(0);
+
+                for (let q = 0; q < 4; q++) {
+                    for (let month = q * 3; month < (q + 1) * 3; month++) {
+                        const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            const date = new Date(currentYear, month, day);
+                            const dayOfWeek = date.getDay();
+                            const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+
+                            shiftsForDay.forEach(s => {
+                                const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                                if (metric === 'arbetstid') {
+                                    data[q] += hours * s.fte;
+                                } else if (metric === 'fte') {
+                                    data[q] += s.fte;
+                                } else if (metric === 'kostnad') {
+                                    const fteCost = parseFloat(document.getElementById('fteCost').value);
+                                    data[q] += s.fte * fteCost / 12 / 1000000;
+                                }
+                            });
+                        }
+                    }
+                    data[q] = parseFloat(data[q].toFixed(2));
+                }
+            } else if (period === 'vecka') {
+                // 7 days
+                labels = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'];
+                data = Array(7).fill(0);
+
+                for (let d = 0; d < 7; d++) {
+                    const dayOfWeek = d === 6 ? 0 : d + 1; // Convert to 0=Sun format
+
+                    shifts.forEach(shift => {
+                        shift.weekPatterns.forEach(pattern => {
+                            if (pattern.includes(dayOfWeek)) {
+                                const hours = getShiftDuration(shift.startTime, shift.endTime, shift.id);
+                                if (metric === 'arbetstid') {
+                                    data[d] += hours * shift.fte * shift.numTeams;
+                                } else if (metric === 'fte') {
+                                    data[d] += shift.fte * shift.numTeams;
+                                } else if (metric === 'kostnad') {
+                                    const fteCost = parseFloat(document.getElementById('fteCost').value);
+                                    data[d] += shift.fte * shift.numTeams * fteCost / 365 / 1000000;
+                                } else if (metric === 'tackning') {
+                                    const required = getRequiredCoverage(dayOfWeek);
+                                    data[d] += required > 0 ? (hours / required) * 100 : 0;
+                                }
+                            }
+                        });
+                    });
+                    data[d] = parseFloat(data[d].toFixed(2));
+                }
+            } else if (period === 'ar') {
+                // Year comparison
+                labels = ['2024', '2025', '2026', '2027'];
+                data = labels.map((year, idx) => {
+                    if (parseInt(year) === currentYear) {
+                        // Calculate for current year
+                        let total = 0;
+                        for (let month = 0; month < 12; month++) {
+                            const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+                            for (let day = 1; day <= daysInMonth; day++) {
+                                const date = new Date(currentYear, month, day);
+                                const dayOfWeek = date.getDay();
+                                const shiftsForDay = getShiftsForDay(date, dayOfWeek);
+                                shiftsForDay.forEach(s => {
+                                    const hours = getShiftDuration(s.startTime, s.endTime, s.id);
+                                    if (metric === 'arbetstid') {
+                                        total += hours * s.fte;
+                                    } else if (metric === 'fte') {
+                                        total += s.fte;
+                                    } else if (metric === 'kostnad') {
+                                        const fteCost = parseFloat(document.getElementById('fteCost').value);
+                                        total += s.fte * fteCost / 12 / 1000000;
+                                    }
+                                });
+                            }
+                        }
+                        return parseFloat(total.toFixed(2));
+                    }
+                    return 0; // No data for other years
+                });
+            }
+
+            // Update chart title based on metric
+            let title = 'Statistik';
+            if (metric === 'arbetstid') title = 'Arbetstid (timmar)';
+            if (metric === 'fte') title = 'FTE';
+            if (metric === 'kostnad') title = 'Kostnad (MSEK)';
+            if (metric === 'tackning') title = 'Täckning (%)';
+
+            statsChart.data.labels = labels;
+            statsChart.data.datasets[0].data = data;
+            statsChart.options.plugins.title.text = title;
+            statsChart.update();
         }
     </script>
 </body>
