@@ -137,3 +137,4 @@ Thumbs.db
 config.json
 *.csv
 schedules/
+.gh-pages-deploy/
