@@ -16,9 +16,24 @@ npm run build
 
 # Preview production build
 npm run preview
+
+# Deploy to GitHub Pages
+npm run deploy
 ```
 
 The app will open at `http://localhost:3000`
+
+## 🌐 Deployment
+
+Deploy to GitHub Pages with one command:
+
+```bash
+npm run deploy
+```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+**Live Demo:** Coming soon at `https://naab14.github.io/Dojo/`
 
 ---
 
