@@ -6,11 +6,17 @@
     <title>Skiftschema Analysator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-size: 13px; }
+        body {
+            font-size: 14px;
+            color: #1f2937;
+        }
 
         * { -webkit-tap-highlight-color: transparent; }
 
-        button, input, select { min-height: 44px; }
+        button, input, select {
+            min-height: 44px;
+            font-size: 14px;
+        }
 
         @media (max-width: 640px) {
             body { font-size: 14px; }
@@ -20,130 +26,151 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 1px;
-            background: #cbd5e1;
+            background: #9ca3af;
         }
 
         .calendar-day {
-            background: white;
+            background: #fafafa;
             min-height: 110px;
-            padding: 4px;
+            padding: 6px;
             position: relative;
         }
 
-        .calendar-day:hover { background: #f8fafc; }
-        .calendar-day.other-month { background: #f1f5f9; opacity: 0.5; }
-        .calendar-day.today { background: #dbeafe; border: 2px solid #3b82f6; }
+        .calendar-day:hover { background: #f5f5f5; }
+        .calendar-day.other-month { background: #e5e7eb; opacity: 0.6; }
+        .calendar-day.today { background: #e5e7eb; border: 2px solid #374151; }
 
         .day-header {
             font-weight: 600;
-            font-size: 11px;
-            margin-bottom: 2px;
+            font-size: 14px;
+            margin-bottom: 4px;
             display: flex;
             justify-content: space-between;
+            color: #111827;
         }
 
         .shift-bar {
-            font-size: 9px;
-            padding: 1px 3px;
-            margin: 1px 0;
+            font-size: 14px;
+            padding: 4px 6px;
+            margin: 2px 0;
             border-radius: 2px;
-            color: white;
+            color: #111827;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
-            line-height: 1.3;
+            line-height: 1.4;
+            border: 1px solid #4b5563;
         }
 
-        .shift-bar:hover { opacity: 0.8; }
+        .shift-bar:hover {
+            background: #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
 
-        .shift-color-1 { background-color: #3b82f6; }
-        .shift-color-2 { background-color: #8b5cf6; }
-        .shift-color-3 { background-color: #ec4899; }
-        .shift-color-4 { background-color: #f59e0b; }
-        .shift-color-5 { background-color: #10b981; }
-        .shift-color-6 { background-color: #06b6d4; }
-        .shift-color-7 { background-color: #ef4444; }
-        .shift-color-8 { background-color: #6366f1; }
+        .shift-bar:focus {
+            outline: 2px solid #1f2937;
+            outline-offset: 2px;
+        }
+
+        /* Grayscale shift colors */
+        .shift-color-1 { background-color: #f3f4f6; border-color: #6b7280; }
+        .shift-color-2 { background-color: #e5e7eb; border-color: #4b5563; }
+        .shift-color-3 { background-color: #d1d5db; border-color: #374151; }
+        .shift-color-4 { background-color: #f9fafb; border-color: #9ca3af; }
+        .shift-color-5 { background-color: #e5e7eb; border-color: #6b7280; }
+        .shift-color-6 { background-color: #d1d5db; border-color: #4b5563; }
+        .shift-color-7 { background-color: #f3f4f6; border-color: #374151; }
+        .shift-color-8 { background-color: #e5e7eb; border-color: #1f2937; }
 
         .day-summary {
-            font-size: 9px;
-            color: #64748b;
-            margin-top: 2px;
-            padding-top: 2px;
-            border-top: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #4b5563;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid #d1d5db;
+            font-weight: 500;
         }
 
         .weekday-header {
-            background: #1e293b;
+            background: #1f2937;
             color: white;
-            padding: 6px 4px;
+            padding: 8px 4px;
             text-align: center;
             font-weight: 600;
-            font-size: 11px;
+            font-size: 14px;
         }
 
-        .coverage-dot {
-            width: 6px;
-            height: 6px;
+        .coverage-indicator {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             display: inline-block;
+            border: 1px solid #4b5563;
         }
 
-        .coverage-good { background: #10b981; }
-        .coverage-partial { background: #f59e0b; }
-        .coverage-poor { background: #ef4444; }
+        .coverage-good { background: #374151; }
+        .coverage-partial { background: #9ca3af; border: 2px solid #4b5563; }
+        .coverage-poor { background: transparent; border: 2px solid #4b5563; }
 
         .compact-card {
-            background: white;
+            background: #fafafa;
             border-radius: 4px;
-            padding: 8px;
-            margin-bottom: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
         }
 
         .compact-card h3 {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
+            color: #111827;
         }
 
         /* Pattern Card Styles */
         .pattern-card {
-            border: 2px solid #e2e8f0;
+            border: 2px solid #d1d5db;
             border-radius: 6px;
-            padding: 8px;
+            padding: 10px;
             cursor: pointer;
             transition: all 0.2s;
-            background: white;
+            background: #fafafa;
         }
 
         .pattern-card:hover {
-            border-color: #3b82f6;
-            background: #f0f9ff;
+            border-color: #4b5563;
+            background: #f5f5f5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .pattern-card:focus {
+            outline: 2px solid #1f2937;
+            outline-offset: 2px;
         }
 
         .pattern-card.selected {
-            border-color: #3b82f6;
-            background: #dbeafe;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #1f2937;
+            background: #e5e7eb;
+            box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
         }
 
         .pattern-card.selected::before {
             content: '✓';
             position: absolute;
-            top: 4px;
-            right: 4px;
-            background: #3b82f6;
+            top: 6px;
+            right: 6px;
+            background: #1f2937;
             color: white;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
         }
 
@@ -163,14 +190,16 @@
 
         /* Input Validation */
         input.error, select.error {
-            border-color: #ef4444 !important;
-            background-color: #fef2f2 !important;
+            border-color: #374151 !important;
+            background-color: #f3f4f6 !important;
+            border-width: 2px !important;
         }
 
         .error-message {
-            color: #ef4444;
-            font-size: 11px;
-            margin-top: 2px;
+            color: #1f2937;
+            font-size: 14px;
+            margin-top: 4px;
+            font-weight: 600;
         }
 
         /* Progress Steps */
@@ -181,51 +210,63 @@
         }
 
         .progress-step .step-circle {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            background: #e2e8f0;
+            background: #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 16px;
+            color: #4b5563;
+            border: 2px solid #d1d5db;
         }
 
         .progress-step.active .step-circle {
-            background: #3b82f6;
+            background: #374151;
             color: white;
+            border-color: #1f2937;
         }
 
         .progress-step.complete .step-circle {
-            background: #10b981;
+            background: #1f2937;
             color: white;
+            border-color: #111827;
         }
 
         .preset-button {
             min-height: 44px;
-            padding: 8px 12px;
-            border: 2px solid #e2e8f0;
+            padding: 10px 14px;
+            border: 2px solid #d1d5db;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
+            background: #fafafa;
+            color: #111827;
         }
 
         .preset-button:hover {
-            border-color: #3b82f6;
-            background: #f0f9ff;
+            border-color: #4b5563;
+            background: #f5f5f5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .preset-button:focus {
+            outline: 2px solid #1f2937;
+            outline-offset: 2px;
         }
 
         .preset-button.active {
-            border-color: #3b82f6;
-            background: #dbeafe;
+            border-color: #1f2937;
+            background: #e5e7eb;
         }
 
         /* Wizard Modal */
         .wizard-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -233,113 +274,242 @@
         }
 
         .wizard-content {
-            background: white;
+            background: #fafafa;
             border-radius: 8px;
             max-width: 600px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
+            border: 2px solid #4b5563;
         }
 
         input, select {
-            font-size: 16px !important; /* Prevent zoom on iOS */
+            font-size: 16px !important;
+            background: white;
+            border: 1px solid #9ca3af;
+            color: #111827;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid #1f2937;
+            outline-offset: 2px;
+            border-color: #1f2937;
         }
 
         button {
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        button:focus {
+            outline: 2px solid #1f2937;
+            outline-offset: 2px;
+        }
+
+        /* Primary buttons - solid fill */
+        .btn-primary {
+            background: #1f2937;
+            color: white;
+            border: 2px solid #111827;
+        }
+
+        .btn-primary:hover {
+            background: #111827;
+        }
+
+        /* Secondary buttons - outlined */
+        .btn-secondary {
+            background: transparent;
+            color: #1f2937;
+            border: 2px solid #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+            border-color: #1f2937;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1f2937;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            min-width: 300px;
+            font-size: 14px;
+            border: 2px solid #111827;
+        }
+
+        .toast.success {
+            background: #374151;
+            border-color: #1f2937;
+        }
+
+        .toast.error {
+            background: #1f2937;
+            border-color: #000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-close {
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: auto;
+            padding: 4px 8px;
+        }
+
+        .toast-close:hover {
+            opacity: 0.8;
+        }
+
+        /* Label improvements */
+        label {
+            font-weight: 500;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* Better contrast for text */
+        .text-primary {
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .text-secondary {
+            color: #4b5563;
+        }
+
+        .text-muted {
+            color: #6b7280;
+        }
+
+        /* Tag/badge styling */
+        .tag-recommended {
+            font-size: 14px;
+            background: #e5e7eb;
+            color: #111827;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #9ca3af;
+            font-weight: 600;
         }
     </style>
 </head>
-<body class="bg-slate-100">
-    <div class="min-h-screen p-2">
+<body class="bg-gray-200">
+    <div class="min-h-screen p-3">
         <div class="max-w-[1600px] mx-auto">
             <!-- Quick Start Guide Banner -->
-            <div id="quickStartBanner" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded shadow-lg p-4 mb-2">
+            <div id="quickStartBanner" class="bg-gray-100 rounded shadow-sm p-4 mb-3 border-2 border-gray-300">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
-                        <h2 class="text-lg font-bold mb-2">🚀 Kom igång på 3 steg</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                            <div class="flex items-start gap-2">
-                                <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold flex-shrink-0">1</div>
+                        <h2 class="text-lg font-bold mb-3 text-gray-900">Kom igång på 3 steg</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
                                 <div>
-                                    <strong>Konfigurera</strong><br>
-                                    Välj mallar eller skapa egna skift
+                                    <strong class="text-gray-900">Konfigurera</strong><br>
+                                    <span class="text-gray-700">Välj mallar eller skapa egna skift</span>
                                 </div>
                             </div>
-                            <div class="flex items-start gap-2">
-                                <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold flex-shrink-0">2</div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
                                 <div>
-                                    <strong>Jämför</strong><br>
-                                    Se täckning och kostnader i kalendern
+                                    <strong class="text-gray-900">Jämför</strong><br>
+                                    <span class="text-gray-700">Se täckning och kostnader i kalendern</span>
                                 </div>
                             </div>
-                            <div class="flex items-start gap-2">
-                                <div class="w-6 h-6 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold flex-shrink-0">3</div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
                                 <div>
-                                    <strong>Besluta</strong><br>
-                                    Exportera och implementera
+                                    <strong class="text-gray-900">Besluta</strong><br>
+                                    <span class="text-gray-700">Exportera och implementera</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <button onclick="dismissQuickStart()" class="text-white hover:text-blue-200 ml-4">✕</button>
+                    <button onclick="dismissQuickStart()" class="text-gray-600 hover:text-gray-900 ml-4 text-xl font-bold" aria-label="Stäng guide">×</button>
                 </div>
             </div>
 
             <!-- Header -->
-            <div class="bg-white rounded shadow-sm p-2 mb-2">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <h1 class="text-lg font-bold text-slate-800">📅 Skiftschema Analysator</h1>
-                    <div class="flex gap-1 flex-wrap">
-                        <button onclick="previousMonth()" class="px-3 py-2 bg-slate-600 text-white rounded hover:bg-slate-700">←</button>
-                        <button onclick="nextMonth()" class="px-3 py-2 bg-slate-600 text-white rounded hover:bg-slate-700">→</button>
-                        <button onclick="saveToLocalStorage()" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">💾 Spara</button>
-                        <button onclick="loadFromLocalStorage()" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">📂 Ladda</button>
-                        <button onclick="exportSchedule()" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">📥 CSV</button>
+            <div class="bg-gray-50 rounded shadow-sm p-3 mb-3 border border-gray-300">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <h1 class="text-xl font-bold text-gray-900">Skiftschema Analysator</h1>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="previousMonth()" class="px-4 py-2 btn-secondary rounded" aria-label="Föregående månad">←</button>
+                        <button onclick="nextMonth()" class="px-4 py-2 btn-secondary rounded" aria-label="Nästa månad">→</button>
+                        <button onclick="saveToLocalStorage()" class="px-4 py-2 btn-primary rounded">Spara</button>
+                        <button onclick="loadFromLocalStorage()" class="px-4 py-2 btn-secondary rounded">Ladda</button>
+                        <button onclick="exportSchedule()" class="px-4 py-2 btn-primary rounded">Exportera CSV</button>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Action Presets -->
-            <div class="bg-white rounded shadow-sm p-3 mb-2">
-                <h3 class="font-bold text-sm mb-2">⚡ Snabbmallar</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <div class="bg-gray-50 rounded shadow-sm p-4 mb-3 border border-gray-300">
+                <h3 class="font-bold text-base mb-3 text-gray-900">Snabbmallar</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <button onclick="applyPreset('pharma')" class="preset-button text-left">
-                        <div class="font-bold text-sm">🏭 Pharma/Tillverkning</div>
-                        <div class="text-xs text-slate-600">24/7 • 3 skift • Balanserad</div>
+                        <div class="font-bold text-base text-gray-900">Pharma/Tillverkning</div>
+                        <div class="text-sm text-gray-600">24/7 • 3 skift • Balanserad</div>
                     </button>
                     <button onclick="applyPreset('continuous')" class="preset-button text-left">
-                        <div class="font-bold text-sm">🔄 Kontinuerlig Process</div>
-                        <div class="text-xs text-slate-600">168h/vecka • Max täckning</div>
+                        <div class="font-bold text-base text-gray-900">Kontinuerlig Process</div>
+                        <div class="text-sm text-gray-600">168h/vecka • Max täckning</div>
                     </button>
                     <button onclick="applyPreset('cost_optimized')" class="preset-button text-left">
-                        <div class="font-bold text-sm">💰 Kostnadsoptimerad</div>
-                        <div class="text-xs text-slate-600">5x8 • Minimal bemanning</div>
+                        <div class="font-bold text-base text-gray-900">Kostnadsoptimerad</div>
+                        <div class="text-sm text-gray-600">5x8 • Minimal bemanning</div>
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-6 gap-2">
+            <div class="grid grid-cols-1 xl:grid-cols-6 gap-3">
                 <!-- Compact Sidebar -->
-                <div class="xl:col-span-1 space-y-2">
+                <div class="xl:col-span-1 space-y-3">
                     <!-- KPIs -->
                     <div class="compact-card">
                         <button onclick="toggleSection('kpi')" class="w-full flex items-center justify-between text-left">
-                            <h3>📈 Översikt</h3>
-                            <span id="kpi-toggle">▼</span>
+                            <h3>Översikt</h3>
+                            <span id="kpi-toggle" class="text-lg">▼</span>
                         </button>
-                        <div id="kpi-section" class="collapsible-section expanded space-y-2 text-xs mt-2">
+                        <div id="kpi-section" class="collapsible-section expanded space-y-3 text-sm mt-3">
                             <div class="flex justify-between">
-                                <span class="text-slate-600">FTE:</span>
-                                <span><span class="font-bold" id="kpiTotalFTE">0</span>/<span id="kpiBudget">44</span></span>
+                                <span class="text-gray-600">FTE:</span>
+                                <span class="text-gray-900 font-bold"><span id="kpiTotalFTE">0</span>/<span id="kpiBudget">44</span></span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-slate-600">Utnyttj:</span>
-                                <span class="font-bold text-green-600" id="kpiUtilization">0%</span>
+                                <span class="text-gray-600">Utnyttjande:</span>
+                                <span class="font-bold text-gray-900" id="kpiUtilization">0%</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-slate-600">Kostnad:</span>
-                                <span class="font-bold text-purple-600" id="kpiCost">0M</span>
+                                <span class="text-gray-600">Kostnad:</span>
+                                <span class="font-bold text-gray-900" id="kpiCost">0M</span>
                             </div>
                         </div>
                     </div>
@@ -347,23 +517,23 @@
                     <!-- Settings -->
                     <div class="compact-card">
                         <button onclick="toggleSection('settings')" class="w-full flex items-center justify-between text-left">
-                            <h3>⚙️ Inställningar</h3>
-                            <span id="settings-toggle">▼</span>
+                            <h3>Inställningar</h3>
+                            <span id="settings-toggle" class="text-lg">▼</span>
                         </button>
-                        <div id="settings-section" class="collapsible-section expanded space-y-2 mt-2">
+                        <div id="settings-section" class="collapsible-section expanded space-y-3 mt-3">
                             <div>
-                                <label class="block text-xs text-slate-600 mb-1">FTE Budget</label>
+                                <label class="block mb-2">FTE Budget</label>
                                 <input type="number" id="totalFTE" value="44" min="1" max="200" onchange="validateAndCalculate()"
-                                       class="w-full px-2 py-1 text-xs border rounded">
+                                       class="w-full px-3 py-2 border rounded">
                                 <div id="totalFTE-error" class="error-message hidden"></div>
                             </div>
                             <div>
-                                <label class="block text-xs text-slate-600 mb-1">
+                                <label class="block mb-2">
                                     Kostnad/år (SEK)
-                                    <span class="text-slate-400">Snitt: 650k</span>
                                 </label>
                                 <input type="number" id="fteCost" value="650000" min="300000" max="2000000" step="10000" onchange="validateAndCalculate()"
-                                       class="w-full px-2 py-1 text-xs border rounded">
+                                       class="w-full px-3 py-2 border rounded">
+                                <div class="help-text">Snitt: 650k SEK</div>
                                 <div id="fteCost-error" class="error-message hidden"></div>
                             </div>
                         </div>
@@ -372,24 +542,24 @@
                     <!-- Coverage -->
                     <div class="compact-card">
                         <button onclick="toggleSection('coverage')" class="w-full flex items-center justify-between text-left">
-                            <h3>📊 Täckning (h/dag)</h3>
-                            <span id="coverage-toggle">▼</span>
+                            <h3>Täckning (h/dag)</h3>
+                            <span id="coverage-toggle" class="text-lg">▼</span>
                         </button>
-                        <div id="coverage-section" class="collapsible-section expanded space-y-1 text-xs mt-2">
+                        <div id="coverage-section" class="collapsible-section expanded space-y-2 text-sm mt-3">
                             <div class="flex justify-between items-center">
-                                <span>Mån-Fre</span>
+                                <span class="text-gray-900">Mån-Fre</span>
                                 <input type="number" id="coverageMF" value="24" min="0" max="168" onchange="validateAndCalculate()"
-                                       class="w-16 px-1 py-1 text-xs border rounded">
+                                       class="w-20 px-2 py-2 border rounded text-center">
                             </div>
                             <div class="flex justify-between items-center">
-                                <span>Lördag</span>
+                                <span class="text-gray-900">Lördag</span>
                                 <input type="number" id="coverageSat" value="12" min="0" max="24" onchange="validateAndCalculate()"
-                                       class="w-16 px-1 py-1 text-xs border rounded">
+                                       class="w-20 px-2 py-2 border rounded text-center">
                             </div>
                             <div class="flex justify-between items-center">
-                                <span>Söndag</span>
+                                <span class="text-gray-900">Söndag</span>
                                 <input type="number" id="coverageSun" value="0" min="0" max="24" onchange="validateAndCalculate()"
-                                       class="w-16 px-1 py-1 text-xs border rounded">
+                                       class="w-20 px-2 py-2 border rounded text-center">
                             </div>
                         </div>
                     </div>
@@ -397,42 +567,45 @@
                     <!-- Presets -->
                     <div class="compact-card">
                         <button onclick="toggleSection('presets')" class="w-full flex items-center justify-between text-left">
-                            <h3>🏭 Rotationsmallar</h3>
-                            <span id="presets-toggle">▼</span>
+                            <h3>Rotationsmallar</h3>
+                            <span id="presets-toggle" class="text-lg">▼</span>
                         </button>
-                        <div id="presets-section" class="collapsible-section expanded mt-2">
+                        <div id="presets-section" class="collapsible-section expanded mt-3">
                             <div id="patternCards" class="space-y-2"></div>
+                            <button onclick="applySelectedPatterns()" class="w-full px-3 py-2 btn-primary rounded mt-3">
+                                Tillämpa valda mallar
+                            </button>
                         </div>
                     </div>
 
                     <!-- Shifts -->
                     <div class="compact-card">
                         <button onclick="toggleSection('shifts')" class="w-full flex items-center justify-between text-left">
-                            <h3>🔧 Aktiva Skift</h3>
-                            <span id="shifts-toggle">▼</span>
+                            <h3>Aktiva Skift</h3>
+                            <span id="shifts-toggle" class="text-lg">▼</span>
                         </button>
-                        <div id="shifts-section" class="collapsible-section expanded mt-2">
-                            <div class="space-y-1 mb-2 text-xs" id="shiftsList"></div>
-                            <button onclick="showWizard()" class="w-full px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                                + Lägg till skift
+                        <div id="shifts-section" class="collapsible-section expanded mt-3">
+                            <div class="space-y-2 mb-3 text-sm" id="shiftsList"></div>
+                            <button onclick="showWizard()" class="w-full px-3 py-2 btn-primary rounded">
+                                Lägg till skift
                             </button>
                         </div>
                     </div>
 
                     <!-- Quick Tips -->
                     <div class="compact-card">
-                        <h3>💡 Status</h3>
-                        <div id="quickTips" class="text-xs text-slate-600 mt-2"></div>
+                        <h3>Status</h3>
+                        <div id="quickTips" class="text-sm text-gray-700 mt-3"></div>
                     </div>
                 </div>
 
                 <!-- Calendar -->
                 <div class="xl:col-span-5">
-                    <div class="bg-white rounded shadow-sm p-2 mb-2">
-                        <h2 class="text-md font-bold text-center" id="currentMonth"></h2>
+                    <div class="bg-gray-50 rounded shadow-sm p-3 mb-3 border border-gray-300">
+                        <h2 class="text-lg font-bold text-center text-gray-900" id="currentMonth"></h2>
                     </div>
 
-                    <div class="bg-white rounded shadow-sm p-1">
+                    <div class="bg-gray-50 rounded shadow-sm p-2 border border-gray-300">
                         <div class="calendar-grid" id="calendarGrid">
                             <div class="weekday-header">Mån</div>
                             <div class="weekday-header">Tis</div>
@@ -445,23 +618,23 @@
                     </div>
 
                     <!-- Compact Analysis -->
-                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div class="compact-card">
                             <button onclick="toggleSection('weekly')" class="w-full flex items-center justify-between text-left">
-                                <h3>📊 Veckoöversikt</h3>
-                                <span id="weekly-toggle">▼</span>
+                                <h3>Veckoöversikt</h3>
+                                <span id="weekly-toggle" class="text-lg">▼</span>
                             </button>
                             <div id="weekly-section" class="collapsible-section expanded">
-                                <div id="weeklyAnalysis" class="text-xs mt-2"></div>
+                                <div id="weeklyAnalysis" class="text-sm mt-3"></div>
                             </div>
                         </div>
                         <div class="compact-card">
                             <button onclick="toggleSection('cost')" class="w-full flex items-center justify-between text-left">
-                                <h3>💰 Skiftkostnader</h3>
-                                <span id="cost-toggle">▼</span>
+                                <h3>Skiftkostnader</h3>
+                                <span id="cost-toggle" class="text-lg">▼</span>
                             </button>
                             <div id="cost-section" class="collapsible-section expanded">
-                                <div id="costAnalysis" class="text-xs mt-2"></div>
+                                <div id="costAnalysis" class="text-sm mt-3"></div>
                             </div>
                         </div>
                     </div>
@@ -473,129 +646,132 @@
     <!-- Process Setup Wizard Modal -->
     <div id="wizardModal" class="hidden wizard-overlay">
         <div class="wizard-content p-6">
-            <h3 class="text-lg font-bold mb-4">Skapa nytt skift</h3>
+            <h3 class="text-xl font-bold mb-4 text-gray-900">Skapa nytt skift</h3>
 
             <!-- Wizard Steps -->
             <div class="flex justify-between mb-6">
                 <div class="progress-step active" id="step1-indicator">
                     <div class="step-circle">1</div>
-                    <span class="text-xs">Typ</span>
+                    <span class="text-sm font-medium">Typ</span>
                 </div>
                 <div class="progress-step" id="step2-indicator">
                     <div class="step-circle">2</div>
-                    <span class="text-xs">Tider</span>
+                    <span class="text-sm font-medium">Tider</span>
                 </div>
                 <div class="progress-step" id="step3-indicator">
                     <div class="step-circle">3</div>
-                    <span class="text-xs">Bemanning</span>
+                    <span class="text-sm font-medium">Bemanning</span>
                 </div>
             </div>
 
             <!-- Step 1: Choose Template -->
             <div id="wizardStep1" class="space-y-3">
-                <h4 class="font-bold">Välj skifttyp eller mall</h4>
-                <div class="grid grid-cols-2 gap-2">
+                <h4 class="font-bold text-base text-gray-900">Välj skifttyp eller mall</h4>
+                <div class="grid grid-cols-2 gap-3">
                     <button onclick="selectWizardTemplate('custom')" class="preset-button text-left p-3">
-                        <div class="font-bold">Anpassat skift</div>
-                        <div class="text-xs text-slate-600">Definiera egna tider</div>
+                        <div class="font-bold text-base">Anpassat skift</div>
+                        <div class="text-sm text-gray-600">Definiera egna tider</div>
                     </button>
                     <button onclick="selectWizardTemplate('morning')" class="preset-button text-left p-3">
-                        <div class="font-bold">Morgonpass</div>
-                        <div class="text-xs text-slate-600">06:00-14:00</div>
+                        <div class="font-bold text-base">Morgonpass</div>
+                        <div class="text-sm text-gray-600">06:00-14:00</div>
                     </button>
                     <button onclick="selectWizardTemplate('day')" class="preset-button text-left p-3">
-                        <div class="font-bold">Dagpass</div>
-                        <div class="text-xs text-slate-600">08:00-17:00</div>
+                        <div class="font-bold text-base">Dagpass</div>
+                        <div class="text-sm text-gray-600">08:00-17:00</div>
                     </button>
                     <button onclick="selectWizardTemplate('evening')" class="preset-button text-left p-3">
-                        <div class="font-bold">Kvällspass</div>
-                        <div class="text-xs text-slate-600">14:00-22:00</div>
+                        <div class="font-bold text-base">Kvällspass</div>
+                        <div class="text-sm text-gray-600">14:00-22:00</div>
                     </button>
                     <button onclick="selectWizardTemplate('night')" class="preset-button text-left p-3">
-                        <div class="font-bold">Nattpass</div>
-                        <div class="text-xs text-slate-600">22:00-06:00</div>
+                        <div class="font-bold text-base">Nattpass</div>
+                        <div class="text-sm text-gray-600">22:00-06:00</div>
                     </button>
                     <button onclick="selectWizardTemplate('12h_day')" class="preset-button text-left p-3">
-                        <div class="font-bold">12h Dag</div>
-                        <div class="text-xs text-slate-600">06:00-18:00</div>
+                        <div class="font-bold text-base">12h Dag</div>
+                        <div class="text-sm text-gray-600">06:00-18:00</div>
                     </button>
                 </div>
             </div>
 
             <!-- Step 2: Configure Times -->
-            <div id="wizardStep2" class="hidden space-y-3">
+            <div id="wizardStep2" class="hidden space-y-4">
                 <div>
-                    <label class="block font-medium mb-1">Skiftnamn</label>
+                    <label class="block mb-2">Skiftnamn</label>
                     <input type="text" id="wizardShiftName" placeholder="t.ex. Morgonpass"
                            class="w-full px-3 py-2 border rounded">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block font-medium mb-1">Start (HH:MM)</label>
+                        <label class="block mb-2">Start (HH:MM)</label>
                         <input type="time" id="wizardShiftStart" value="06:00"
                                class="w-full px-3 py-2 border rounded">
                     </div>
                     <div>
-                        <label class="block font-medium mb-1">Slut (HH:MM)</label>
+                        <label class="block mb-2">Slut (HH:MM)</label>
                         <input type="time" id="wizardShiftEnd" value="14:00"
                                class="w-full px-3 py-2 border rounded">
                     </div>
                 </div>
-                <p class="text-xs text-slate-500">Format: 24-timmars (06:00, 14:00, 22:00)</p>
+                <p class="help-text">Format: 24-timmars (06:00, 14:00, 22:00)</p>
             </div>
 
             <!-- Step 3: Staffing -->
-            <div id="wizardStep3" class="hidden space-y-3">
+            <div id="wizardStep3" class="hidden space-y-4">
                 <div class="grid grid-cols-3 gap-3">
                     <div>
-                        <label class="block font-medium mb-1">Rotationsveckor</label>
+                        <label class="block mb-2">Rotationsveckor</label>
                         <input type="number" id="wizardRotationWeeks" value="1" min="1" max="8"
                                class="w-full px-3 py-2 border rounded" onchange="updateWizardRotationUI()">
                     </div>
                     <div>
-                        <label class="block font-medium mb-1">Antal team</label>
+                        <label class="block mb-2">Antal team</label>
                         <input type="number" id="wizardNumTeams" value="1" min="1" max="6"
                                class="w-full px-3 py-2 border rounded">
                     </div>
                     <div>
-                        <label class="block font-medium mb-1">FTE/team</label>
+                        <label class="block mb-2">FTE/team</label>
                         <input type="number" id="wizardShiftFTE" value="5" min="0.5" max="50" step="0.5"
                                class="w-full px-3 py-2 border rounded">
                     </div>
                 </div>
                 <div id="wizardWeekPatterns"></div>
                 <div>
-                    <label class="block font-medium mb-1">Färg</label>
+                    <label class="block mb-2">Färg</label>
                     <select id="wizardShiftColor" class="w-full px-3 py-2 border rounded">
-                        <option value="1">Blå</option>
-                        <option value="2">Lila</option>
-                        <option value="3">Rosa</option>
-                        <option value="4">Orange</option>
-                        <option value="5">Grön</option>
-                        <option value="6">Cyan</option>
-                        <option value="7">Röd</option>
-                        <option value="8">Indigo</option>
+                        <option value="1">Ljusgrå</option>
+                        <option value="2">Mellangrå</option>
+                        <option value="3">Mörkgrå</option>
+                        <option value="4">Vit</option>
+                        <option value="5">Grå 1</option>
+                        <option value="6">Grå 2</option>
+                        <option value="7">Grå 3</option>
+                        <option value="8">Svart</option>
                     </select>
                 </div>
             </div>
 
             <!-- Wizard Navigation -->
             <div class="flex gap-2 mt-6">
-                <button id="wizardBack" onclick="wizardBack()" class="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300 hidden">
-                    ← Tillbaka
+                <button id="wizardBack" onclick="wizardBack()" class="px-4 py-2 btn-secondary rounded hidden">
+                    Tillbaka
                 </button>
-                <button id="wizardNext" onclick="wizardNext()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Nästa →
+                <button id="wizardNext" onclick="wizardNext()" class="flex-1 px-4 py-2 btn-primary rounded">
+                    Nästa
                 </button>
-                <button id="wizardFinish" onclick="wizardFinish()" class="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 hidden">
-                    ✓ Slutför
+                <button id="wizardFinish" onclick="wizardFinish()" class="flex-1 px-4 py-2 btn-primary rounded hidden">
+                    Slutför
                 </button>
-                <button onclick="hideWizard()" class="px-4 py-2 bg-slate-200 rounded hover:bg-slate-300">
+                <button onclick="hideWizard()" class="px-4 py-2 btn-secondary rounded">
                     Avbryt
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
     <script>
         let shifts = [];
@@ -671,6 +847,24 @@
             }
         };
 
+        // Toast notification system
+        function showToast(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <span class="toast-close" onclick="this.parentElement.remove()">×</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, duration);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             if (!loadFromLocalStorage()) {
                 loadExampleShifts();
@@ -701,19 +895,31 @@
                 const card = document.createElement('div');
                 card.className = 'pattern-card relative';
                 card.onclick = () => togglePatternSelection(key);
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'button');
+                card.setAttribute('aria-pressed', 'false');
 
-                const isRecommended = preset.recommended ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Rekommenderad</span>' : '';
+                const isRecommended = preset.recommended ? '<span class="tag-recommended">Rekommenderad</span>' : '';
 
                 card.innerHTML = `
-                    <div class="font-bold text-xs mb-1">${preset.name}</div>
-                    <div class="text-xs text-slate-600 mb-2">${preset.description}</div>
+                    <div class="font-bold text-sm mb-2 text-gray-900">${preset.name}</div>
+                    <div class="text-sm text-gray-600 mb-2">${preset.description}</div>
                     ${isRecommended}
                 `;
 
                 // Auto-select recommended patterns
                 if (preset.recommended) {
                     card.classList.add('selected');
+                    card.setAttribute('aria-pressed', 'true');
                 }
+
+                // Keyboard support
+                card.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        card.click();
+                    }
+                });
 
                 container.appendChild(card);
             });
@@ -721,13 +927,14 @@
 
         function togglePatternSelection(presetKey) {
             const card = event.currentTarget;
-            card.classList.toggle('selected');
+            const isSelected = card.classList.toggle('selected');
+            card.setAttribute('aria-pressed', isSelected);
         }
 
         function applySelectedPatterns() {
             const selectedCards = document.querySelectorAll('.pattern-card.selected');
             if (selectedCards.length === 0) {
-                alert('Välj minst en rotationsmall');
+                showToast('Välj minst en rotationsmall', 'error');
                 return;
             }
 
@@ -757,6 +964,7 @@
             renderShiftsList();
             renderCalendar();
             calculate();
+            showToast(`${selectedCards.length} mall(ar) tillämpade`, 'success');
         }
 
         function applyPreset(presetType) {
@@ -773,9 +981,14 @@
 
                 // Select Continental and DuPont patterns
                 const cards = document.querySelectorAll('.pattern-card');
-                cards.forEach(card => card.classList.remove('selected'));
+                cards.forEach(card => {
+                    card.classList.remove('selected');
+                    card.setAttribute('aria-pressed', 'false');
+                });
                 cards[0].classList.add('selected'); // Continental
+                cards[0].setAttribute('aria-pressed', 'true');
                 cards[1].classList.add('selected'); // DuPont
+                cards[1].setAttribute('aria-pressed', 'true');
                 applySelectedPatterns();
             } else if (presetType === 'continuous') {
                 document.getElementById('totalFTE').value = 50;
@@ -785,8 +998,12 @@
                 document.getElementById('coverageSun').value = 24;
 
                 const cards = document.querySelectorAll('.pattern-card');
-                cards.forEach(card => card.classList.remove('selected'));
+                cards.forEach(card => {
+                    card.classList.remove('selected');
+                    card.setAttribute('aria-pressed', 'false');
+                });
                 cards[4].classList.add('selected'); // 24/7 3-shift
+                cards[4].setAttribute('aria-pressed', 'true');
                 applySelectedPatterns();
             } else if (presetType === 'cost_optimized') {
                 document.getElementById('totalFTE').value = 30;
@@ -796,8 +1013,12 @@
                 document.getElementById('coverageSun').value = 0;
 
                 const cards = document.querySelectorAll('.pattern-card');
-                cards.forEach(card => card.classList.remove('selected'));
+                cards.forEach(card => {
+                    card.classList.remove('selected');
+                    card.setAttribute('aria-pressed', 'false');
+                });
                 cards[5].classList.add('selected'); // 5x8
+                cards[5].setAttribute('aria-pressed', 'true');
                 applySelectedPatterns();
             }
         }
@@ -948,30 +1169,30 @@
 
             for (let week = 1; week <= numWeeks; week++) {
                 const div = document.createElement('div');
-                div.className = 'p-2 bg-slate-50 rounded mb-2';
+                div.className = 'p-3 bg-gray-100 rounded mb-3 border border-gray-300';
                 div.innerHTML = `
-                    <label class="block font-medium mb-1 text-xs">Vecka ${week} - Arbetsdagar</label>
-                    <div class="flex gap-1 flex-wrap week-days" data-week="${week}">
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="1"> Mån
+                    <label class="block font-medium mb-2 text-sm text-gray-900">Vecka ${week} - Arbetsdagar</label>
+                    <div class="flex gap-2 flex-wrap week-days" data-week="${week}">
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="1"> Mån
                         </label>
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="2"> Tis
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="2"> Tis
                         </label>
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="3"> Ons
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="3"> Ons
                         </label>
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="4"> Tor
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="4"> Tor
                         </label>
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="5"> Fre
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="5"> Fre
                         </label>
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="6"> Lör
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="6"> Lör
                         </label>
-                        <label class="flex items-center gap-0.5 text-xs">
-                            <input type="checkbox" class="shift-day" value="0"> Sön
+                        <label class="flex items-center gap-1 text-sm">
+                            <input type="checkbox" class="shift-day w-5 h-5" value="0"> Sön
                         </label>
                     </div>
                 `;
@@ -1006,7 +1227,7 @@
             });
 
             if (!name || weekPatterns.every(p => p.length === 0) || fte <= 0) {
-                alert('Fyll i alla obligatoriska fält');
+                showToast('Fyll i alla obligatoriska fält', 'error');
                 return;
             }
 
@@ -1015,8 +1236,10 @@
                 if (shift) {
                     Object.assign(shift, { name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
                 }
+                showToast('Skift uppdaterat', 'success');
             } else {
                 shifts.push({ id: Date.now(), name, startTime: start, endTime: end, rotationWeeks, numTeams, weekPatterns, fte, color });
+                showToast('Skift skapat', 'success');
             }
 
             hideWizard();
@@ -1087,7 +1310,7 @@
                 headerDiv.className = 'day-header';
                 headerDiv.innerHTML = `
                     <span>${currentDay.getDate()}</span>
-                    <span class="coverage-dot ${coverageClass}" title="Täckning: ${coverage.toFixed(1)}/${required}h"></span>
+                    <span class="coverage-indicator ${coverageClass}" title="Täckning: ${coverage.toFixed(1)}/${required}h"></span>
                 `;
                 dayDiv.appendChild(headerDiv);
 
@@ -1097,6 +1320,14 @@
                     shiftBar.textContent = `${shift.name} ${shift.startTime}-${shift.endTime}`;
                     shiftBar.title = `${shift.name}\n${shift.startTime}-${shift.endTime}\n${shift.fte} FTE`;
                     shiftBar.onclick = () => showWizard(shift.id);
+                    shiftBar.setAttribute('tabindex', '0');
+                    shiftBar.setAttribute('role', 'button');
+                    shiftBar.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            showWizard(shift.id);
+                        }
+                    });
                     dayDiv.appendChild(shiftBar);
                 });
 
@@ -1158,6 +1389,7 @@
                 renderShiftsList();
                 renderCalendar();
                 calculate();
+                showToast('Skift borttaget', 'success');
             }
         }
 
@@ -1166,17 +1398,25 @@
             container.innerHTML = '';
             shifts.forEach(shift => {
                 const div = document.createElement('div');
-                div.className = 'p-1 bg-slate-50 rounded border cursor-pointer hover:bg-slate-100';
+                div.className = 'p-2 bg-gray-50 rounded border border-gray-300 cursor-pointer hover:bg-gray-100';
                 div.onclick = () => showWizard(shift.id);
+                div.setAttribute('tabindex', '0');
+                div.setAttribute('role', 'button');
+                div.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        showWizard(shift.id);
+                    }
+                });
                 div.innerHTML = `
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 rounded shift-color-${shift.color}"></div>
-                            <span>${shift.name}</span>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded shift-color-${shift.color}"></div>
+                            <span class="text-gray-900 font-medium">${shift.name}</span>
                         </div>
-                        <button onclick="event.stopPropagation(); deleteShift(${shift.id})" class="text-red-500">✕</button>
+                        <button onclick="event.stopPropagation(); deleteShift(${shift.id})" class="text-gray-600 hover:text-gray-900 font-bold text-lg">×</button>
                     </div>
-                    <div class="text-slate-600">${shift.startTime}-${shift.endTime}</div>
+                    <div class="text-gray-600 text-sm mt-1">${shift.startTime}-${shift.endTime}</div>
                 `;
                 container.appendChild(div);
             });
@@ -1205,18 +1445,18 @@
             const budget = parseFloat(document.getElementById('totalFTE').value);
 
             if (totalFTE > budget) {
-                container.innerHTML = '⚠️ Över budget med ' + (totalFTE - budget).toFixed(1) + ' FTE';
+                container.innerHTML = '<strong>Varning:</strong> Över budget med ' + (totalFTE - budget).toFixed(1) + ' FTE';
             } else if (totalFTE < budget * 0.7) {
-                container.innerHTML = '💡 ' + (budget - totalFTE).toFixed(1) + ' FTE outnyttjat';
+                container.innerHTML = '<strong>Info:</strong> ' + (budget - totalFTE).toFixed(1) + ' FTE outnyttjat';
             } else {
-                container.innerHTML = '✅ Balanserat schema';
+                container.innerHTML = '<strong>OK:</strong> Balanserat schema';
             }
         }
 
         function generateWeeklyAnalysis() {
             const container = document.getElementById('weeklyAnalysis');
             const days = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
-            let html = '<div class="space-y-1">';
+            let html = '<div class="space-y-2">';
 
             for (let d = 0; d < 7; d++) {
                 let coverage = 0;
@@ -1230,8 +1470,8 @@
                     });
                 });
                 const req = getRequiredCoverage(d);
-                const status = coverage >= req ? '✅' : coverage >= req * 0.8 ? '⚠️' : '❌';
-                html += `<div class="flex justify-between"><span>${days[d]}</span><span>${coverage.toFixed(1)}/${req}h ${status}</span></div>`;
+                const statusSymbol = coverage >= req ? '●' : coverage >= req * 0.8 ? '◐' : '○';
+                html += `<div class="flex justify-between text-gray-900"><span>${days[d]}</span><span class="font-medium">${coverage.toFixed(1)}/${req}h <span class="font-bold">${statusSymbol}</span></span></div>`;
             }
 
             html += '</div>';
@@ -1241,12 +1481,12 @@
         function generateCostAnalysis() {
             const container = document.getElementById('costAnalysis');
             const fteCost = parseFloat(document.getElementById('fteCost').value);
-            let html = '<div class="space-y-1">';
+            let html = '<div class="space-y-2">';
 
             shifts.forEach(shift => {
                 const totalFTE = shift.fte * shift.numTeams;
                 const cost = (totalFTE * fteCost / 1000).toFixed(0);
-                html += `<div class="flex justify-between"><span>${shift.name}</span><span>${cost}k kr</span></div>`;
+                html += `<div class="flex justify-between text-gray-900"><span>${shift.name}</span><span class="font-medium">${cost}k kr</span></div>`;
             });
 
             html += '</div>';
@@ -1263,7 +1503,7 @@
                 coverageSun: document.getElementById('coverageSun').value
             };
             localStorage.setItem('shiftScheduleData', JSON.stringify(data));
-            alert('Schema sparat!');
+            showToast('Schema sparat', 'success');
         }
 
         function loadFromLocalStorage() {
@@ -1280,8 +1520,10 @@
                 renderShiftsList();
                 renderCalendar();
                 calculate();
+                showToast('Schema laddat', 'success');
                 return true;
             } catch (e) {
+                showToast('Fel vid laddning av schema', 'error');
                 return false;
             }
         }
@@ -1297,6 +1539,7 @@
             a.href = url;
             a.download = 'skiftschema.csv';
             a.click();
+            showToast('Schema exporterat', 'success');
         }
     </script>
 </body>
