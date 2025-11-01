@@ -4,6 +4,8 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  // GitHub Pages base path (set to '/' for custom domain)
+  base: '/Dojo/',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

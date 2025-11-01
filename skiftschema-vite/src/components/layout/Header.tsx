@@ -2,13 +2,11 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { useUIStore } from '@/stores/useUIStore';
 import { useShiftStore } from '@/stores/useShiftStore';
-import { useSettingsStore } from '@/stores/useSettingsStore';
 import { Shift } from '@/lib/types';
 
 export function Header() {
   const { currentYear, setYear, addToast, previousMonth, nextMonth } = useUIStore();
   const { shifts } = useShiftStore();
-  const settings = useSettingsStore();
 
   const handleSave = () => {
     // Data is auto-saved via useLocalStorage hook
